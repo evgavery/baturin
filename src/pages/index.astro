@@ -1,17 +1,17 @@
 ---
-// Временная заглушка — заменяется полноценной главной в Task 4.
-import '../styles/global.css';
+// Временная заглушка — полноценная главная собирается в Task 4.
+import { SITE } from '../config/site';
+import Base from '../layouts/Base.astro';
 ---
 
-<html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <title>Screenrent</title>
-  </head>
-  <body class="bg-bg text-text">
-    <h1 class="text-screen font-display">Каркас</h1>
-    <p class="font-mono text-dim">Токены и шрифты подключены</p>
-  </body>
-</html>
+<Base
+  title={`Аренда экранов для мероприятий в Москве — смета за 30 минут | ${SITE.brandName}`}
+  description="Плазменные панели 55–98″, LED-экраны, тач-панели и видеотрансляции в аренду. Доставка, монтаж и техник на площадке. Смета за 30 минут в Telegram, WhatsApp или MAX."
+>
+  <section class="mx-auto max-w-[1200px] px-4 pt-12 pb-16 sm:px-6">
+    <h1 class="font-display text-[clamp(30px,4.2vw,52px)] leading-[1.05] font-semibold text-screen">
+      Каркас
+    </h1>
+    <p class="mt-4 font-mono text-dim">Шапка, подвал, док мессенджеров и SEO-обвязка подключены</p>
+  </section>
+</Base>

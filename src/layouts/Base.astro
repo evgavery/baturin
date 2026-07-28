@@ -1,0 +1,124 @@
+---
+import '../styles/global.css';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import MessengerDock from '../components/MessengerDock.astro';
+import JsonLd from '../components/seo/JsonLd.astro';
+import { SITE } from '../config/site';
+import { POLICY_LINK } from '../data/nav';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Дополнительная микроразметка страницы: Product, FAQPage, BreadcrumbList и т.п. */
+  jsonLd?: object[];
+  noindex?: boolean;
+}
+
+const { title, description, jsonLd = [], noindex = false } = Astro.props;
+
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const ogImage = new URL('/og-image.png', SITE.url).href;
+
+// Адрес не выдумываем: в разметке только город и зона работы (ТЗ §8.2 — точный адрес не подтверждён).
+const localBusiness = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  name: SITE.brandName,
+  telephone: SITE.phone,
+  email: SITE.email,
+  url: SITE.url,
+  address: { '@type': 'PostalAddress', addressLocality: 'Москва', addressCountry: 'RU' },
+  areaServed: 'Москва и Московская область',
+  openingHours: 'Mo-Su 00:00-24:00',
+};
+
+// metrikaId = 0 означает «счётчик не подключён»: тогда на страницу не попадает ни строчки Метрики.
+const metrikaId = SITE.metrikaId;
+const metrikaSnippet = `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<e.scripts.length;j++){if(e.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");ym(${metrikaId},"init",{clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});`;
+---
+
+<!doctype html>
+<html lang="ru" data-metrika={metrikaId}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
+    {/* У noindex-страниц (404) собственного URL нет — самоссылающийся canonical был бы ложью. */}
+    {!noindex && <link rel="canonical" href={canonical} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link
+      rel="preload"
+      href="/fonts/onest-cyrillic-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/unbounded-cyrillic-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content={ogImage} />
+    <JsonLd data={localBusiness} />
+    {jsonLd.map((data) => <JsonLd data={data} />)}
+    {metrikaId > 0 && <script is:inline set:html={metrikaSnippet} />}
+    <script>
+      import '../islands/app';
+    </script>
+  </head>
+  <body>
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:rounded-full focus:bg-accent focus:px-5 focus:py-3 focus:text-[14px] focus:font-semibold focus:text-white"
+      >К основному содержимому</a
+    >
+    <Header />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <MessengerDock />
+
+    <div
+      id="cookie-bar"
+      hidden
+      class="fixed right-[88px] bottom-4 left-4 z-[44] flex flex-wrap items-center gap-4 rounded-box border border-line-strong bg-bg/95 px-5 py-2.5 backdrop-blur-[12px] sm:right-[104px] sm:bottom-6 sm:left-6 sm:rounded-full"
+    >
+      <p class="min-w-[180px] flex-1 text-[13.5px] text-dim">
+        Сайт использует cookie для аналитики. Продолжая, вы соглашаетесь с <a
+          href={POLICY_LINK.href}
+          class="text-focus underline underline-offset-2">политикой</a
+        >.
+      </p>
+      <button
+        type="button"
+        id="cookie-ok"
+        class="min-h-[44px] rounded-full bg-accent px-5 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-accent-soft active:bg-accent-press"
+        >Понятно</button
+      >
+    </div>
+    {
+      metrikaId > 0 && (
+        <noscript>
+          <div>
+            <img
+              src={`https://mc.yandex.ru/watch/${metrikaId}`}
+              class="absolute -left-[9999px]"
+              alt=""
+            />
+          </div>
+        </noscript>
+      )
+    }
+  </body>
+</html>
