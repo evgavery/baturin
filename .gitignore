@@ -6,3 +6,9 @@ dist/
 .idea/
 .DS_Store
 lead-config.php
+.superpowers/
+tests/.tmp/
+.astro/
+.tmp-lh.json
+test-results/
+playwright-report/
