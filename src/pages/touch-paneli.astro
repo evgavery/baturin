@@ -144,7 +144,7 @@ const cardButton =
     </section>
 
     {/* Позиции и цены: три карточки из SITE.prices.touchTable + Product-разметка на каждую. */}
-    <section id="positions" class="mt-20">
+    <section id="positions" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Позиции и цены</h2>
       <div class="grid gap-bento md:grid-cols-3">
         {
@@ -176,14 +176,14 @@ const cardButton =
     </section>
 
     {/* Что входит + отдельный блок про контент и настройку (ТЗ §5.4). */}
-    <section id="content" class="mt-20 grid gap-bento md:grid-cols-12">
+    <section id="content" class="cv-auto mt-20 grid gap-bento md:grid-cols-12">
       <div class={`min-w-0 md:col-span-5 ${boxClass} p-6 sm:p-8`}>
         <h2 class="text-[20px] font-semibold text-screen">Что входит в аренду</h2>
         <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
           {
             SITE.included.map((item, index) => (
               <li class="flex gap-3">
-                <span class="font-mono text-[13px] text-accent-soft">
+                <span class="font-mono text-[13px] text-focus">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span>{item}</span>
@@ -207,6 +207,8 @@ const cardButton =
     </section>
 
     {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    {/* content-visibility намеренно не ставим: внутри [data-seo-text], а его innerText
+        браузер отдаёт пустым, пока секция вне вьюпорта не отрендерена — падают e2e (pages.spec.ts). */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда берут сенсорную панель и что влияет на цену</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
@@ -252,12 +254,12 @@ const cardButton =
       </div>
     </section>
 
-    <section id="faq" class="mt-20">
+    <section id="faq" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Вопросы по тач-панелям</h2>
       <FaqBlock items={FAQ_TOUCH} withJsonLd />
     </section>
 
-    <section id="cta" class="mt-20">
+    <section id="cta" class="cv-auto mt-20">
       <CtaBlock preset={touchPreset} />
     </section>
   </div>

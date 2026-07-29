@@ -121,11 +121,11 @@ const messengerLink =
     </section>
 
     {/* Режим, зона работы и реквизиты — каждый факт прямо из SITE, без ручного ввода. */}
-    <section class="mt-20 grid gap-bento sm:grid-cols-3">
+    <section class="cv-auto mt-20 grid gap-bento sm:grid-cols-3">
       {
         details.map((item) => (
           <div id={item.id} class={`${boxClass} p-6`}>
-            <p class="font-mono text-[11.5px] tracking-[0.12em] text-accent-soft uppercase">
+            <p class="font-mono text-[11.5px] tracking-[0.12em] text-focus uppercase">
               {item.kicker}
             </p>
             <h2 class="mt-4 text-[19px] font-semibold text-screen">{item.title}</h2>

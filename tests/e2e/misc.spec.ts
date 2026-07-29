@@ -51,13 +51,26 @@ test('на мобильном бургер открывает и закрыва�
   await page.goto('/');
   const nav = page.locator('#site-nav');
   const toggle = page.locator('#nav-toggle');
+  const navItems = nav.locator('a, button');
 
   await expect(nav).toBeHidden();
   await expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
-  await toggle.click();
+  // Открываем клавиатурой (Enter на сфокусированном toggle), не click() — сценарий дословно про
+  // клавиатурного пользователя: он активирует бургер и продолжает Tab вперёд.
+  await toggle.focus();
+  await page.keyboard.press('Enter');
   await expect(nav).toBeVisible();
   await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  // nav в DOM стоит раньше toggle (нужно для порядка на десктопе) — без явного переноса фокуса
+  // открытые пункты меню оказались бы в tab-порядке РАНЬШЕ toggle, и клавиатурный пользователь,
+  // продолжая Tab вперёд от toggle, проскакивал бы мимо открытого меню в контент страницы.
+  await expect(navItems.first()).toBeFocused();
+
+  // Tab продолжает естественно вглубь меню (а не наружу из него) — второй пункт следующий по
+  // порядку, не какой-то элемент вне nav.
+  await page.keyboard.press('Tab');
+  await expect(navItems.nth(1)).toBeFocused();
 
   await toggle.click();
   await expect(nav).toBeHidden();
@@ -72,4 +85,41 @@ test('клик по телефону в шапке отправляет цель
   await page.locator('header a[data-goal="click_phone"]').click({ noWaitAfter: true });
 
   await expect.poll(goals).toContain('click_phone');
+});
+
+test('prefers-reduced-motion: анимация «включения» hero-карточек сжимается почти до нуля', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  // [data-screen-in]: слайдер парка + 3 бокса-факта — все идут с animation: screen-in 240ms
+  // (index.astro). Глушит global.css: animation-duration: 0.01ms !important под reduce.
+  const cards = page.locator('[data-screen-in]');
+  const count = await cards.count();
+  expect(count).toBeGreaterThan(0);
+
+  for (let i = 0; i < count; i++) {
+    const duration = await cards.nth(i).evaluate((el) => getComputedStyle(el).animationDuration);
+    // Computed style отдаёт время в секундах (0.01ms = 1e-05s) — сравниваем как число, а не
+    // строкой: обычная (не приглушённая) длительность анимации — 240ms = 0.24s, порог с большим
+    // запасом ниже неё.
+    expect(Number.parseFloat(duration)).toBeLessThan(0.001);
+  }
+});
+
+test('prefers-reduced-motion: автопрокрутка слайдера парка не стартует', async ({ page }) => {
+  await page.clock.install();
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+
+  const firstDot = page.locator('[data-dot]').first();
+  await expect(firstDot).toHaveAttribute('aria-current', 'true');
+
+  // AUTOPLAY_MS = 6000 (hero-slider.ts) — 7 с с запасом: без reduced-motion слайд к этому
+  // моменту уже сменился бы (see play(): reducedMotion.matches блокирует запуск таймера).
+  await page.clock.fastForward(7000);
+
+  await expect(firstDot).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('[data-dot]').nth(1)).not.toHaveAttribute('aria-current', 'true');
 });

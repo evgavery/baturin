@@ -52,6 +52,13 @@ function initNav(): void {
     const open = nav.toggleAttribute('data-open');
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+    // nav стоит в DOM раньше toggle (нужно для порядка на десктопе, где меню — строка между
+    // лого и телефоном). На мобильном это значит: после открытия свежепоявившиеся пункты меню
+    // стоят в tab-порядке РАНЬШЕ toggle, и Tab вперёд от toggle уводит мимо меню в контент.
+    // Переносим фокус на первый пункт явно — как уже делает нативный <dialog> у квиза.
+    if (open) {
+      nav.querySelector<HTMLElement>('a, button')?.focus();
+    }
   });
 }
 

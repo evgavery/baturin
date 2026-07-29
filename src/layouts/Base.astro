@@ -11,12 +11,10 @@ import { POLICY_LINK } from '../data/nav';
 interface Props {
   title: string;
   description: string;
-  /** Дополнительная микроразметка страницы: Product, FAQPage, BreadcrumbList и т.п. */
-  jsonLd?: object[];
   noindex?: boolean;
 }
 
-const { title, description, jsonLd = [], noindex = false } = Astro.props;
+const { title, description, noindex = false } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL('/og-image.png', SITE.url).href;
@@ -71,7 +69,6 @@ const metrikaSnippet = `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m
     {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
     <JsonLd data={localBusiness} />
-    {jsonLd.map((data) => <JsonLd data={data} />)}
     {metrikaId > 0 && <script is:inline set:html={metrikaSnippet} />}
     <script>
       import '../islands/app';

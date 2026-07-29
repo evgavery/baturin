@@ -159,7 +159,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
       </div>
     </section>
 
-    <section class="mt-20 grid gap-bento md:grid-cols-12">
+    <section class="cv-auto mt-20 grid gap-bento md:grid-cols-12">
       <div id="prices" class="min-w-0 md:col-span-7">
         <h2 class="section-title mb-6">Цена по дням</h2>
         <PriceTable
@@ -181,7 +181,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
           {
             SITE.included.map((item, index) => (
               <li class="flex gap-3">
-                <span class="font-mono text-[13px] text-accent-soft">
+                <span class="font-mono text-[13px] text-focus">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span>{item}</span>
@@ -196,13 +196,15 @@ const boxClass = 'rounded-box border border-line bg-surface';
       </div>
     </section>
 
-    <section id="mounting" class="mt-20">
+    <section id="mounting" class="cv-auto mt-20">
       <h2 class="section-title mb-3">Способы установки</h2>
       <p class="mb-6 max-w-[70ch] text-[15px] text-dim">{copy.mountNote}</p>
       <MountMethods />
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility намеренно не
+        ставим: внутри [data-seo-text], а его innerText браузер отдаёт пустым, пока секция вне
+        вьюпорта не отрендерена — падают e2e (plazmy.spec.ts). */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда берут {d.size}&nbsp;дюймов</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
@@ -210,7 +212,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
           {
             d.scenarios.map((scenario, index) => (
               <li class="flex gap-3 text-[15px] text-screen">
-                <span class="font-mono text-[13px] text-accent-soft">
+                <span class="font-mono text-[13px] text-focus">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span>{scenario}</span>
@@ -227,7 +229,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
       </div>
     </section>
 
-    <section id="neighbours" class="mt-20">
+    <section id="neighbours" class="cv-auto mt-20">
       <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
         <h2 class="section-title">Другие диагонали</h2>
         <a
@@ -261,12 +263,12 @@ const boxClass = 'rounded-box border border-line bg-surface';
       </div>
     </section>
 
-    <section id="faq" class="mt-20">
+    <section id="faq" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Вопросы по панели {d.size}&nbsp;дюймов</h2>
       <FaqBlock items={d.faq} withJsonLd />
     </section>
 
-    <section id="cta" class="mt-20">
+    <section id="cta" class="cv-auto mt-20">
       <CtaBlock preset={preset} />
     </section>
 

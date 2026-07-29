@@ -317,7 +317,7 @@ const primaryButton =
     </section>
 
     {/* Типовые конфигурации: цены посчитаны из ставки за м², а не вписаны руками. */}
-    <section id="configs" class="mt-20">
+    <section id="configs" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Типовые конфигурации</h2>
       <div class="grid gap-bento md:grid-cols-3">
         {
@@ -351,7 +351,7 @@ const primaryButton =
     </section>
 
     {/* Флагман — блок-повтор с главной (ТЗ §5.3) — и состав аренды LED. */}
-    <section class="mt-20 grid gap-bento md:grid-cols-12">
+    <section class="cv-auto mt-20 grid gap-bento md:grid-cols-12">
       <div class="min-w-0 md:col-span-7">
         <FlagshipBlock />
       </div>
@@ -361,7 +361,7 @@ const primaryButton =
           {
             included.map((item, index) => (
               <li class="flex gap-3">
-                <span class="font-mono text-[13px] text-accent-soft">
+                <span class="font-mono text-[13px] text-focus">
                   {String(index + 1).padStart(2, '0')}
                 </span>
                 <span>{item}</span>
@@ -376,7 +376,10 @@ const primaryButton =
       </div>
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility здесь намеренно
+        НЕ ставим: внутри — [data-seo-text], а пока элемент под content-visibility: auto не
+        отрендерен (вне вьюпорта), браузер отдаёт его innerText пустой строкой — падают
+        e2e-проверки длины текста (calc.spec.ts и др.), которые читают именно innerText. */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда берут LED-экран и что влияет на цену</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
@@ -433,12 +436,12 @@ const primaryButton =
       </div>
     </section>
 
-    <section id="faq" class="mt-20">
+    <section id="faq" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Вопросы по LED-экранам</h2>
       <FaqBlock items={FAQ_LED} withJsonLd />
     </section>
 
-    <section id="cta" class="mt-20">
+    <section id="cta" class="cv-auto mt-20">
       <CtaBlock preset={ledPreset} />
     </section>
   </div>

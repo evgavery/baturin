@@ -170,7 +170,7 @@ const cardButton =
     </section>
 
     {/* Пакеты и цены: три карточки из SITE.prices.streamTable + Product-разметка на каждую. */}
-    <section id="packages" class="mt-20">
+    <section id="packages" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Пакеты трансляции</h2>
       <div class="grid gap-bento md:grid-cols-3">
         {
@@ -194,7 +194,7 @@ const cardButton =
     </section>
 
     {/* Процесс работы (ТЗ §5.5): бриф → техплан → трансляция → запись. */}
-    <section id="process" class="mt-20">
+    <section id="process" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Как проходит работа</h2>
       <ol class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
         {
@@ -210,7 +210,9 @@ const cardButton =
       </ol>
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility намеренно не
+        ставим: внутри [data-seo-text], а его innerText браузер отдаёт пустым, пока секция вне
+        вьюпорта не отрендерена — падают e2e (pages.spec.ts). */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда нужна трансляция и что влияет на цену</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
@@ -257,12 +259,12 @@ const cardButton =
       </div>
     </section>
 
-    <section id="faq" class="mt-20">
+    <section id="faq" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Вопросы по видеотрансляциям</h2>
       <FaqBlock items={FAQ_STREAM} withJsonLd />
     </section>
 
-    <section id="cta" class="mt-20">
+    <section id="cta" class="cv-auto mt-20">
       <CtaBlock preset={streamPreset} />
     </section>
   </div>

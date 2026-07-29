@@ -160,12 +160,12 @@ const plasmaPreset = JSON.stringify({ services: ['plasma'] });
     </section>
 
     {/* Цены по дням: одна таблица на направление. */}
-    <section id="prices" class="mt-20">
+    <section id="prices" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Цены по дням</h2>
       <PriceTable rows={priceRows} footnote={priceFootnote} />
     </section>
 
-    <section id="other-diagonals" class="mt-20">
+    <section id="other-diagonals" class="cv-auto mt-20">
       <div
         class="grid gap-6 rounded-box border border-line-strong bg-surface p-6 sm:p-9 md:grid-cols-2 md:items-center"
       >
@@ -192,12 +192,12 @@ const plasmaPreset = JSON.stringify({ services: ['plasma'] });
       </div>
     </section>
 
-    <section id="mounting" class="mt-20">
+    <section id="mounting" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Способы установки</h2>
       <MountMethods />
     </section>
 
-    <section id="tech" class="mt-20">
+    <section id="tech" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Как подключается панель</h2>
       <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-3">
         {
@@ -211,7 +211,9 @@ const plasmaPreset = JSON.stringify({ services: ['plasma'] });
       </div>
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility намеренно не
+        ставим: внутри [data-seo-text], а его innerText браузер отдаёт пустым, пока секция вне
+        вьюпорта не отрендерена — падают e2e (plazmy.spec.ts). */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Как выбрать диагональ и что влияет на смету</h2>
       <div class="rounded-box border border-line bg-surface p-6 sm:p-9">
@@ -262,12 +264,12 @@ const plasmaPreset = JSON.stringify({ services: ['plasma'] });
       </div>
     </section>
 
-    <section id="faq" class="mt-20">
+    <section id="faq" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Вопросы по плазменным панелям</h2>
       <FaqBlock items={FAQ_PLASMA} withJsonLd />
     </section>
 
-    <section id="cta" class="mt-20">
+    <section id="cta" class="cv-auto mt-20">
       <CtaBlock preset={plasmaPreset} />
     </section>
   </div>
