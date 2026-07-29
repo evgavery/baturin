@@ -55,6 +55,19 @@ function initNav(): void {
   });
 }
 
+/** Открытие квиза лениво: quiz.ts (самый тяжёлый остров сайта) не должен попасть в eager-бандл. */
+function initQuizLauncher(): void {
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const trigger = target.closest('[data-quiz-open]');
+    if (!trigger) return;
+    event.preventDefault();
+    const preset = trigger.getAttribute('data-preset') ?? undefined;
+    void import('./quiz').then((m) => m.openQuiz(preset));
+  });
+}
+
 function initCookieBar(): void {
   const bar = document.getElementById('cookie-bar');
   const accept = document.getElementById('cookie-ok');
@@ -71,4 +84,5 @@ function initCookieBar(): void {
 saveUtm();
 initGoals();
 initNav();
+initQuizLauncher();
 initCookieBar();

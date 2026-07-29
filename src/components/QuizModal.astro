@@ -1,0 +1,526 @@
+---
+// Квиз «Получить смету» — ТЗ §6.1, главный конверсионный механизм сайта (Task 11). Чистая
+// разметка: вся логика (переключение шагов, валидация, отправка) — в src/islands/quiz.ts,
+// который грузится лениво по клику на [data-quiz-open] (см. app.ts). Здесь — только структура
+// и статичные дефолты, совпадающие с initialState() из quiz-core (шаг 1, ничего не выбрано).
+import { SITE } from '../config/site';
+import { POLICY_LINK } from '../data/nav';
+import ChannelRadios from './ChannelRadios.astro';
+
+const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
+const field =
+  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
+// Настоящий input растянут на всю строку-лейбл (position:absolute; inset:0) и лишь прозрачен
+// (opacity:0), а не сжат в 1×1px через sr-only: карточка/чип должны быть кликабельны целиком,
+// а не только текстом лейбла — а полностью «зажатый» clip-инпут вообще не участвует в
+// hit-testing браузера (см. разбор в QA), из-за чего decorативный span перехватывал клики.
+const overlayInput = 'absolute inset-0 z-10 cursor-pointer opacity-0';
+
+// Значения — ServiceKey из quiz-core; подписи — дословно ТЗ §6.1 (шаг 1: «что нужно»).
+// 'complex' в квизе не участвует (только форма подбора, Task 12).
+const SERVICE_OPTIONS = [
+  { value: 'plasma', label: 'Плазменные панели' },
+  { value: 'led', label: 'LED-экран' },
+  { value: 'touch', label: 'Тач-панели' },
+  { value: 'stream', label: 'Видеотрансляция' },
+  { value: 'consult', label: 'Не знаю, нужна консультация' },
+];
+
+const DIAGONAL_OPTIONS = [
+  { value: '55', label: '55″' },
+  { value: '75', label: '75″' },
+  { value: '86', label: '86″' },
+  { value: '98', label: '98″' },
+  { value: 'other', label: 'Другая' },
+];
+
+// Значение duration:'1' — тот же формат, что в примере payload ТЗ §6.4 ("duration": "1").
+const DURATION_OPTIONS = [
+  { value: '1', label: '1 день' },
+  { value: '2-3', label: '2–3 дня' },
+  { value: 'week', label: 'Неделя и больше' },
+  { value: 'hours', label: 'Разово на несколько часов' },
+];
+
+// Подписи — как в QualifyForm.astro (те же 4 типа клиента по всему сайту); пустая опция — дословно из брифа.
+const CLIENT_TYPE_OPTIONS = [
+  { value: 'agency', label: 'Ивент-агентство' },
+  { value: 'organizer', label: 'Организатор мероприятий' },
+  { value: 'company', label: 'Компания (прямой заказчик)' },
+  { value: 'other', label: 'Другое' },
+];
+
+// Дублирующие ссылки на мессенджеры — экраны успеха и ошибки (ТЗ §6.1).
+const MESSENGER_LINKS = [
+  { href: SITE.tgLink, goal: 'click_tg', label: 'Telegram' },
+  { href: SITE.waLink, goal: 'click_wa', label: 'WhatsApp' },
+  { href: SITE.maxLink, goal: 'click_max', label: 'MAX' },
+];
+---
+
+<dialog id="quiz" aria-label="Получить смету">
+  {/* Вне [data-form-view]: крестик обязан быть виден и на экране успеха, и на экране ошибки —
+     не только пока показана форма (иначе после сети «легли» пользователь заперт без кнопки). */}
+  <button
+    type="button"
+    data-close
+    aria-label="Закрыть"
+    class="quiz-close absolute flex h-11 w-11 flex-none items-center justify-center rounded-full border border-line-strong text-[19px] text-text transition-colors duration-200 hover:border-line-on-strong hover:text-screen"
+    >×</button
+  >
+  <form id="quiz-form" novalidate class="flex min-h-full flex-col">
+    <div data-form-view>
+      <p
+        data-step-label
+        class="max-w-[calc(100%-56px)] font-mono text-[11.5px] tracking-[0.12em] text-dim uppercase"
+      >
+        ШАГ&nbsp;1&nbsp;ИЗ&nbsp;3 · ОБОРУДОВАНИЕ
+      </p>
+
+      <div
+        data-progress
+        role="progressbar"
+        aria-valuemin="1"
+        aria-valuemax="3"
+        aria-valuenow="1"
+        aria-label="Шаг 1 из 3"
+        class="mt-4 mb-7 flex items-center gap-1.5"
+      >
+        <span data-segment class="quiz-segment is-filled h-[3px] flex-1 rounded-full"></span>
+        <span data-segment class="quiz-segment h-[3px] flex-1 rounded-full"></span>
+        <span data-segment class="quiz-segment h-[3px] flex-1 rounded-full"></span>
+      </div>
+
+      {/* Шаг 1 — что нужно (ТЗ §6.1). */}
+      <div data-step="1">
+        <h2 class="font-display text-[clamp(22px,3vw,28px)] leading-[1.2] font-medium tracking-[-0.02em] text-screen">
+          Что нужно на площадке?
+        </h2>
+        <p class="mt-2 mb-6 text-[15px] text-dim">Можно выбрать несколько — подберём комплект.</p>
+
+        <div class="flex flex-col gap-2.5">
+          {
+            SERVICE_OPTIONS.map((option) => (
+              <label class="option-card relative flex min-h-[48px] cursor-pointer items-center gap-3 rounded-sm border border-line-strong px-4 text-[14.5px] text-text transition-colors duration-200 hover:border-line-on-strong">
+                <input type="checkbox" name="services" value={option.value} class={overlayInput} />
+                <span
+                  class="option-mark flex h-5 w-5 flex-none items-center justify-center rounded-[6px]"
+                  aria-hidden="true"
+                >
+                  <span class="option-check text-[12px] leading-none text-white">✓</span>
+                </span>
+                {option.label}
+              </label>
+            ))
+          }
+        </div>
+
+        <div data-sub="plasma" hidden class="mt-5 border-t border-line pt-5">
+          <fieldset>
+            <legend class={label}>Диагональ панели</legend>
+            <div class="flex flex-wrap gap-2">
+              {
+                DIAGONAL_OPTIONS.map((option) => (
+                  <label class="option-chip relative flex min-h-[44px] cursor-pointer items-center gap-2 rounded-sm border border-line-strong px-3.5 text-[14px] text-text transition-colors duration-200 hover:border-line-on-strong">
+                    <input
+                      type="checkbox"
+                      name="diagonals"
+                      value={option.value}
+                      class={overlayInput}
+                    />
+                    <span
+                      class="option-ring flex h-4 w-4 flex-none items-center justify-center rounded-full"
+                      aria-hidden="true"
+                    >
+                      <span class="option-dot h-2 w-2 rounded-full bg-accent" />
+                    </span>
+                    {option.label}
+                  </label>
+                ))
+              }
+            </div>
+          </fieldset>
+          <div class="mt-4 max-w-[180px]">
+            <label class={label} for="quiz-qty">Количество панелей</label>
+            <input
+              id="quiz-qty"
+              name="qty"
+              type="number"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              value="1"
+              class={field}
+            />
+          </div>
+        </div>
+
+        <div data-sub="led" hidden class="mt-5 border-t border-line pt-5">
+          <div class="grid grid-cols-2 gap-bento">
+            <div>
+              <label class={label} for="quiz-led-w">Ширина, м</label>
+              <input
+                id="quiz-led-w"
+                name="ledW"
+                type="number"
+                min="0"
+                step="0.5"
+                inputmode="decimal"
+                placeholder="Например, 4"
+                class={field}
+              />
+            </div>
+            <div>
+              <label class={label} for="quiz-led-h">Высота, м</label>
+              <input
+                id="quiz-led-h"
+                name="ledH"
+                type="number"
+                min="0"
+                step="0.5"
+                inputmode="decimal"
+                placeholder="Например, 2,5"
+                class={field}
+              />
+            </div>
+          </div>
+          <label class="mt-4 flex min-h-[44px] cursor-pointer items-center gap-3">
+            <input type="checkbox" name="outdoor" class="h-5 w-5 flex-none accent-accent" />
+            <span class="text-[14.5px] text-text">Экран на улице (outdoor)</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Шаг 2 — когда и где (ТЗ §6.1). Все поля необязательные. */}
+      <div data-step="2" hidden>
+        <h2 class="font-display text-[clamp(22px,3vw,28px)] leading-[1.2] font-medium tracking-[-0.02em] text-screen">
+          Когда и где?
+        </h2>
+        <p class="mt-2 mb-6 text-[15px] text-dim">
+          Даже примерные даты помогут проверить наличие.
+        </p>
+
+        <div>
+          <label class={label} for="quiz-date">Дата мероприятия</label>
+          <input id="quiz-date" name="date" type="date" class={field} />
+        </div>
+        <label class="mt-3 flex min-h-[44px] cursor-pointer items-center gap-3">
+          <input type="checkbox" data-date-unknown class="h-5 w-5 flex-none accent-accent" />
+          <span class="text-[14px] text-dim">Ещё не знаю дату</span>
+        </label>
+
+        <fieldset class="mt-5">
+          <legend class={label}>Длительность</legend>
+          <div class="flex flex-col gap-2">
+            {
+              DURATION_OPTIONS.map((option) => (
+                <label class="option-chip relative flex min-h-[44px] cursor-pointer items-center gap-2.5 rounded-sm border border-line-strong px-3.5 text-[14px] text-text transition-colors duration-200 hover:border-line-on-strong">
+                  <input type="radio" name="duration" value={option.value} class={overlayInput} />
+                  <span
+                    class="option-ring flex h-4 w-4 flex-none items-center justify-center rounded-full"
+                    aria-hidden="true"
+                  >
+                    <span class="option-dot h-2 w-2 rounded-full bg-accent" />
+                  </span>
+                  {option.label}
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <div class="mt-5">
+          <label class={label} for="quiz-venue">Площадка/адрес</label>
+          <input
+            id="quiz-venue"
+            name="venue"
+            type="text"
+            placeholder="Экспоцентр, павильон 2, зал 5"
+            class={field}
+          />
+        </div>
+        <div class="mt-5">
+          <label class={label} for="quiz-comment">Комментарий</label>
+          <textarea
+            id="quiz-comment"
+            name="comment"
+            rows="3"
+            placeholder="2 панели 75″ на стойках + ноутбук на регистрации"
+            class={`${field} resize-y`}
+          ></textarea>
+        </div>
+      </div>
+
+      {/* Шаг 3 — куда прислать смету (ТЗ §6.1). */}
+      <div data-step="3" hidden>
+        <h2 class="font-display text-[clamp(22px,3vw,28px)] leading-[1.2] font-medium tracking-[-0.02em] text-screen">
+          Куда прислать смету?
+        </h2>
+        <p class="mt-2 mb-6 text-[15px] text-dim">Отправим в течение 30&nbsp;минут в рабочее время.</p>
+
+        <div class="grid gap-bento sm:grid-cols-2">
+          <div>
+            <label class={label} for="quiz-name">Имя</label>
+            <input
+              id="quiz-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              placeholder="Как к вам обращаться"
+              class={field}
+            />
+          </div>
+          <div>
+            <label class={label} for="quiz-company">Компания</label>
+            <input
+              id="quiz-company"
+              name="company"
+              type="text"
+              placeholder="Необязательно"
+              class={field}
+            />
+          </div>
+        </div>
+
+        <div class="mt-bento">
+          <label class={label} for="quiz-client-type">Кто вы</label>
+          <select id="quiz-client-type" name="client_type" class={field}>
+            <option value="">Кто вы (необязательно)</option>
+            {CLIENT_TYPE_OPTIONS.map((option) => <option value={option.value}>{option.label}</option>)}
+          </select>
+        </div>
+
+        <div class="mt-bento">
+          <ChannelRadios idPrefix="quiz" legend="Канал связи" />
+        </div>
+
+        <div class="mt-bento">
+          <label class={label} for="quiz-contact">Контакт</label>
+          <input
+            id="quiz-contact"
+            name="contact"
+            type="text"
+            placeholder="Телефон, ник или e-mail"
+            class={`${field} font-mono`}
+          />
+        </div>
+
+        <label class="mt-6 flex min-h-[44px] cursor-pointer items-start gap-3 py-1.5">
+          <input
+            type="checkbox"
+            name="consent"
+            id="quiz-consent"
+            class="mt-0.5 h-5 w-5 flex-none accent-accent"
+          />
+          <span class="max-w-[62ch] text-[13.5px] leading-[1.5] text-dim">
+            Согласен на обработку персональных данных и с <a
+              href={POLICY_LINK.href}
+              target="_blank"
+              rel="noopener"
+              class="text-focus underline underline-offset-2">политикой конфиденциальности</a
+            >
+          </span>
+        </label>
+
+        <p class="mt-6 text-[13px] text-dim">Пришлём в течение 30&nbsp;минут в рабочее время.</p>
+      </div>
+
+      {/* Ловушка для ботов: поле скрыто и выведено из фокуса, живой человек его не заполнит. */}
+      <input
+        type="text"
+        name="website"
+        tabindex="-1"
+        autocomplete="off"
+        aria-hidden="true"
+        class="absolute -left-[9999px] h-0 w-0 opacity-0"
+      />
+
+      {/* Живой регион ВСЕГДА в DOM (без hidden) — SR подписывается на регион, только если он уже
+         существовал к моменту изменения текста; появление региона одновременно с текстом почти
+         никогда не анонсируется. Пусто = нет ошибки, отступ гасим через :empty в <style>. */}
+      <p data-errors aria-live="polite" class="mt-5 text-[13.5px] whitespace-pre-line text-err"></p>
+
+      <div data-nav class="mt-7 flex gap-3">
+        <button
+          type="button"
+          data-action="back"
+          hidden
+          class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[15px] text-text transition-colors duration-200 hover:border-line-on-strong hover:text-screen"
+          >Назад</button
+        >
+        <button
+          type="button"
+          data-action="next"
+          class="flex min-h-[48px] flex-1 items-center justify-center rounded-full bg-accent px-6 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-dim disabled:shadow-none"
+          >Далее</button
+        >
+      </div>
+    </div>
+
+    {/* Экран успеха — ТЗ §6.1: подтверждение + дублирующие прямые ссылки на мессенджеры. */}
+    <div data-screen="success" hidden>
+      <div
+        class="flex h-12 w-12 items-center justify-center rounded-full bg-ok text-[22px] text-bg-deep"
+        aria-hidden="true"
+      >
+        ✓
+      </div>
+      {/* tabindex=-1: после успеха фокус переводим сюда программно (не в таб-порядке) — иначе
+         он проваливается на <body> и SR-пользователь остаётся «нигде» после сабмита. */}
+      <p
+        data-success-text
+        tabindex="-1"
+        class="mt-5 max-w-[min(46ch,calc(100%-56px))] text-[17px] text-text"
+      ></p>
+      <div class="mt-7 border-t border-line pt-5">
+        <p class="text-[14px] text-dim">Хотите быстрее — напишите нам напрямую:</p>
+        <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+          {
+            MESSENGER_LINKS.map((item) => (
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener"
+                data-goal={item.goal}
+                class="font-mono text-[14px] text-focus underline underline-offset-2"
+              >
+                {item.label}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    {/* Блок ошибки — ТЗ §6.1: не терять введённое, дать прямые контакты и повторную попытку. */}
+    <div data-screen="error" hidden>
+      {/* min(46ch, 100%-56px): тот же приём, что у [data-step-label] — текст не должен заходить
+         под [data-close] в углу; на этом экране, в отличие от успеха, перед текстом нет иконки,
+         которая на мобиле опускала бы первую строку ниже кнопки. */}
+      <p class="max-w-[min(46ch,calc(100%-56px))] text-[17px] text-text">
+        Не получилось отправить. Попробуйте ещё раз или напишите нам напрямую:
+      </p>
+      <div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+        {
+          MESSENGER_LINKS.map((item) => (
+            <a
+              href={item.href}
+              target="_blank"
+              rel="noopener"
+              data-goal={item.goal}
+              class="font-mono text-[14px] text-focus underline underline-offset-2"
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </div>
+      <button
+        type="button"
+        data-action="retry"
+        class="mt-6 flex min-h-[48px] items-center justify-center rounded-full bg-accent px-6 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+        >Попробовать ещё раз</button
+      >
+    </div>
+  </form>
+</dialog>
+
+<style>
+  dialog#quiz {
+    position: fixed;
+    inset: 0 0 0 auto;
+    margin: 0;
+    width: min(560px, 100%);
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
+    background: var(--color-bg);
+    color: var(--color-text);
+    border: 0;
+    border-left: 1px solid var(--color-line-strong);
+    box-shadow: -40px 0 120px color-mix(in srgb, var(--color-accent) 14%, transparent);
+    padding: clamp(22px, 3vw, 34px);
+    overflow-y: auto;
+  }
+  /* Крестик — поверх любого экрана (форма/успех/ошибка), с тем же отступом, что и padding
+     диалога, поэтому визуально стоит в углу так же, как раньше, будучи частью потока. */
+  .quiz-close {
+    top: clamp(22px, 3vw, 34px);
+    right: clamp(22px, 3vw, 34px);
+    z-index: 20;
+  }
+  dialog#quiz::backdrop {
+    background: var(--color-backdrop);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+  @media (max-width: 640px) {
+    dialog#quiz {
+      width: 100%;
+    }
+  }
+
+  /* [data-errors] всегда в DOM (без hidden — см. комментарий у разметки); пока пусто, гасим
+     собственный отступ, чтобы не оставалось пустой полосы над кнопками «Назад/Далее». */
+  [data-errors]:empty {
+    margin: 0;
+  }
+
+  /* Прогресс: 3 сегмента, заполнены до текущего шага включительно, со свечением акцента. */
+  .quiz-segment {
+    background: var(--color-line-strong);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .quiz-segment.is-filled {
+    background: var(--color-accent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--color-accent) 60%, transparent);
+  }
+
+  /* Карточки-чекбоксы (услуги, диагонали) — вид из Дизайн-система.dc.html: заливка акцентом
+     и заполненная галочка у выбранных, без чужих либ — состояние читается через :has(). */
+  .option-card:has(input:checked) {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    border-color: var(--color-accent);
+    color: var(--color-screen);
+  }
+  .option-card:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .option-mark {
+    border: 1px solid var(--color-dim);
+  }
+  .option-card:has(input:checked) .option-mark {
+    border-color: transparent;
+    background: var(--color-accent);
+  }
+  .option-check {
+    opacity: 0;
+  }
+  .option-card:has(input:checked) .option-check {
+    opacity: 1;
+  }
+
+  /* Radio-чипы (длительность) — тот же ring+dot приём, что в ChannelRadios.astro. */
+  .option-chip:has(input:checked) {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    border-color: var(--color-accent);
+    color: var(--color-screen);
+  }
+  .option-chip:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .option-ring {
+    border: 1px solid var(--color-dim);
+  }
+  .option-chip:has(input:checked) .option-ring {
+    border-color: var(--color-accent);
+  }
+  .option-dot {
+    opacity: 0;
+  }
+  .option-chip:has(input:checked) .option-dot {
+    opacity: 1;
+  }
+</style>

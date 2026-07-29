@@ -3,6 +3,7 @@ import '../styles/global.css';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import MessengerDock from '../components/MessengerDock.astro';
+import QuizModal from '../components/QuizModal.astro';
 import JsonLd from '../components/seo/JsonLd.astro';
 import { SITE } from '../config/site';
 import { POLICY_LINK } from '../data/nav';
@@ -120,5 +121,6 @@ const metrikaSnippet = `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m
         </noscript>
       )
     }
+    <QuizModal />
   </body>
 </html>

@@ -18,6 +18,7 @@
   --color-focus: #8FB2FF;         /* focus-ring и ссылки */
   --color-ok: #33C27F;
   --color-err: #FF5C5C;
+  --color-backdrop: rgb(5 7 12 / 0.72); /* затемнение под модалкой/шторкой */
   --font-display: 'Unbounded', system-ui, sans-serif;
   --font-body: 'Onest', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;

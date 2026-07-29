@@ -22,16 +22,19 @@ const CHANNELS = [
   <div class="flex flex-wrap gap-2.5">
     {
       CHANNELS.map((channel, index) => (
-        <label class="chip flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-sm border border-line-strong px-4 text-[14px] text-text transition-colors duration-200 hover:border-line-on-strong has-[:checked]:border-accent has-[:checked]:text-screen">
+        <label class="chip relative flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-sm border border-line-strong px-4 text-[14px] text-text transition-colors duration-200 hover:border-line-on-strong has-[:checked]:border-accent has-[:checked]:text-screen">
           <input
             type="radio"
             name="channel"
             value={channel.value}
             id={`${idPrefix}-channel-${channel.value}`}
             checked={index === 0}
-            class="sr-only"
+            class="absolute inset-0 z-10 cursor-pointer opacity-0"
           />
-          <span class="ring flex h-4 w-4 flex-none items-center justify-center rounded-full border border-dim">
+          <span
+            class="ring flex h-4 w-4 flex-none items-center justify-center rounded-full border border-dim"
+            aria-hidden="true"
+          >
             <span class="dot h-2 w-2 rounded-full bg-accent" />
           </span>
           {channel.label}
