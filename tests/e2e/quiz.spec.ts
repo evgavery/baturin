@@ -26,6 +26,13 @@ function findLogLine(marker: string): string | undefined {
 // в разметке видна только одна в зависимости от ширины вьюпорта,:visible берёт ровно её.
 const HEADER_QUIZ_BUTTON = 'header button[data-quiz-open]:visible';
 
+// Браузерные POST этого файла (через fetch со страницы) идут с одним и тем же 127.0.0.1 — без
+// разнесения по X-Test-IP они делят один rate-limit-бакет (окно фикстуры — 2 с) с short-form.spec.ts
+// и qualify-form.spec.ts. Коллизия сегодня теоретическая (файлы гоняются последовательно), но
+// фикс превентивный: extraHTTPHeaders контекста уходит со всеми запросами, включая fetch со
+// страницы; test_mode fixture честно доверяет X-Test-IP (см. tests/fixtures/lead-config.test.php).
+test.use({ extraHTTPHeaders: { 'X-Test-IP': '10.7.0.1' } });
+
 test.describe('Квиз «Получить смету»', () => {
   test('(1) кнопка шапки открывает квиз и отправляет цель quiz_open', async ({ page }) => {
     const goals = await collectGoals(page);

@@ -29,6 +29,11 @@ function findLogLine(marker: string): string | undefined {
 // называет бриф Task 12) рендерит вариант с кнопкой квиза (Task 5+, закреплено тестами plazmy.spec.ts:
 // `#cta button[data-quiz-open]`), а не короткую форму. Тестируем на реальном месте формы — см.
 // раздел «Отклонения» task-12-report.md.
+
+// Свой X-Test-IP на файл — иначе браузерные POST этого файла делят rate-limit-бакет 127.0.0.1
+// (окно фикстуры 2 с) с quiz.spec.ts и qualify-form.spec.ts (см. quiz.spec.ts).
+test.use({ extraHTTPHeaders: { 'X-Test-IP': '10.7.0.2' } });
+
 test.describe('Короткая форма CTA (#short-form)', () => {
   test('успешная отправка: форма прячется, показывается успех с фокусом, цель lead_short, заявка в логе', async ({
     page,

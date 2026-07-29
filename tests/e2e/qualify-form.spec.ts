@@ -22,6 +22,10 @@ function findLogLine(marker: string): string | undefined {
     .find((line) => line.includes(marker));
 }
 
+// Свой X-Test-IP на файл — иначе браузерные POST этого файла делят rate-limit-бакет 127.0.0.1
+// (окно фикстуры 2 с) с quiz.spec.ts и short-form.spec.ts (см. quiz.spec.ts).
+test.use({ extraHTTPHeaders: { 'X-Test-IP': '10.7.0.3' } });
+
 test.describe('Форма подбора на главной (#qualify-form)', () => {
   test('полная отправка: услуга + тип клиента + need → успех с фокусом, цель lead_qualify, заявка в логе', async ({
     page,
