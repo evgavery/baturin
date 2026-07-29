@@ -1,0 +1,47 @@
+---
+interface Props {
+  rows: { label: string; d1: number; d2?: number; d3?: number }[];
+  /** Сноска под таблицей: что входит в цену и что считается отдельно. */
+  caption: string;
+}
+
+import { rub } from '../lib/format';
+
+const { rows, caption } = Astro.props;
+
+const head = 'border-y border-line px-5 py-3 font-normal text-[11px] tracking-[0.1em] uppercase';
+const cell = 'border-b border-line px-5 py-3.5';
+---
+
+<div class="rounded-box border border-line bg-surface">
+  {/* Скролл-контейнер получает фокус с клавиатуры: иначе таблицу шире экрана нечем прокрутить. */}
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label={caption}>
+    <table class="w-full min-w-[560px] border-collapse font-mono text-[14px]">
+      <caption class="caption-bottom px-5 py-4 text-left font-mono text-[11.5px] text-dim">
+        {caption}
+      </caption>
+      <thead class="text-dim">
+        <tr>
+          <th scope="col" class={`${head} text-left`}>Позиция</th>
+          <th scope="col" class={`${head} text-right`}>1&nbsp;день</th>
+          <th scope="col" class={`${head} text-right`}>2&nbsp;дня</th>
+          <th scope="col" class={`${head} text-right`}>3&nbsp;дня</th>
+        </tr>
+      </thead>
+      <tbody class="text-screen">
+        {
+          rows.map((row) => (
+            <tr>
+              <th scope="row" class={`${cell} text-left font-normal`}>
+                {row.label}
+              </th>
+              <td class={`${cell} text-right`}>{rub(row.d1)}</td>
+              <td class={`${cell} text-right`}>{row.d2 === undefined ? '—' : rub(row.d2)}</td>
+              <td class={`${cell} text-right`}>{row.d3 === undefined ? '—' : rub(row.d3)}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

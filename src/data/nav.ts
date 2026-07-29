@@ -8,20 +8,18 @@ export interface NavLink {
 export const HOME_LINK: NavLink = { href: '/', label: 'Главная' };
 
 /** Четыре направления — ядро меню, подвала и страницы 404. */
-export const DIRECTION_LINKS: NavLink[] = [
-  { href: '/plazmy/', label: 'Плазменные панели' },
-  { href: '/led-ekrany/', label: 'LED-экраны' },
-  { href: '/touch-paneli/', label: 'Тач-панели' },
-  { href: '/videotranslyacii/', label: 'Видеотрансляции' },
-];
+export const PLASMA_LINK: NavLink = { href: '/plazmy/', label: 'Плазменные панели' };
+export const LED_LINK: NavLink = { href: '/led-ekrany/', label: 'LED-экраны' };
+export const TOUCH_LINK: NavLink = { href: '/touch-paneli/', label: 'Тач-панели' };
+export const STREAM_LINK: NavLink = { href: '/videotranslyacii/', label: 'Видеотрансляции' };
 
+export const DIRECTION_LINKS: NavLink[] = [PLASMA_LINK, LED_LINK, TOUCH_LINK, STREAM_LINK];
+
+export const AGENCY_LINK: NavLink = { href: '/agentstvam/', label: 'Агентствам' };
 export const CONTACTS_LINK: NavLink = { href: '/kontakty/', label: 'Контакты' };
 
 /** Разделы «о компании» — вторая половина меню (ТЗ §4). */
-export const COMPANY_LINKS: NavLink[] = [
-  { href: '/agentstvam/', label: 'Агентствам' },
-  CONTACTS_LINK,
-];
+export const COMPANY_LINKS: NavLink[] = [AGENCY_LINK, CONTACTS_LINK];
 
 /** Меню шапки — направления плюс разделы для B2B-заказчика. */
 export const NAV_LINKS: NavLink[] = [...DIRECTION_LINKS, ...COMPANY_LINKS];

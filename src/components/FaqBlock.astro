@@ -1,0 +1,56 @@
+---
+import JsonLd from './seo/JsonLd.astro';
+
+interface Props {
+  items: { q: string; a: string }[];
+  /** Разметка FAQPage — только там, где ответы видны на странице (требование Яндекса и Google). */
+  withJsonLd?: boolean;
+}
+
+const { items, withJsonLd = false } = Astro.props;
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: items.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+---
+
+<div class="rounded-box border border-line bg-surface px-5 sm:px-7">
+  {
+    items.map((item, index) => (
+      <details name="faq" open={index === 0} class="border-b border-line last:border-b-0">
+        <summary class="flex min-h-[56px] cursor-pointer items-center justify-between gap-4 py-4 text-[16.5px] font-medium text-screen">
+          {item.q}
+        </summary>
+        <p class="mb-5 max-w-[80ch] text-[15px] text-text">{item.a}</p>
+      </details>
+    ))
+  }
+</div>
+
+{withJsonLd && <JsonLd data={faqLd} />}
+
+<style>
+  summary {
+    list-style: none;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+  /* Знак «+/−» вместо нативного треугольника — по дизайн-системе. */
+  summary::after {
+    content: '+';
+    flex: none;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--color-accent-soft);
+  }
+  details[open] summary::after {
+    content: '−';
+  }
+</style>

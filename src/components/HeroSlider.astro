@@ -1,0 +1,122 @@
+---
+import { SITE } from '../config/site';
+import { LED_LINK, PLASMA_LINK, TOUCH_LINK } from '../data/nav';
+
+// Слайды парка — ТЗ §5.1 п.1. Цифры парка приходят только из SITE.park, руками не вписаны.
+// Заголовки слайдов — h2: единственный H1 страницы живёт в hero и статичен.
+const NBSP = '\u00A0';
+
+const slides = [
+  {
+    kicker: 'Парк · LED',
+    big: `${SITE.park.ledTotalM2}${NBSP}м²`,
+    rest: 'светодиодных экранов в собственном парке',
+    note: 'indoor и outdoor, собираем экран любого размера из кабинетов',
+    link: LED_LINK,
+  },
+  {
+    kicker: 'Парк · Плазмы',
+    big: `Более ${SITE.park.plasmaUnits}`,
+    rest: 'плазменных панелей',
+    note: `55–98″, доставка и монтаж включены`,
+    link: PLASMA_LINK,
+  },
+  {
+    kicker: 'Парк · Интерактив',
+    big: 'Тач-панели, интерактивные киоски, видеотрансляции',
+    rest: '',
+    note: 'стенды, регистрация гостей, гибридные конференции',
+    link: TOUCH_LINK,
+  },
+];
+---
+
+<section
+  id="hero-slider"
+  aria-roledescription="carousel"
+  aria-label="Парк оборудования"
+  class="screen-on relative flex h-full min-h-[340px] flex-col overflow-hidden rounded-box"
+>
+  <div
+    data-track
+    class="track flex flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
+  >
+    {
+      slides.map((slide, index) => (
+        <div
+          data-slide
+          role="group"
+          aria-roledescription="слайд"
+          aria-label={`${index + 1} из ${slides.length}`}
+          class="flex w-full flex-none snap-start flex-col justify-between gap-6 p-6 sm:p-8"
+        >
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-screen/75 uppercase">
+            {slide.kicker}
+          </p>
+          <div>
+            <h2 class="text-screen">
+              <span class="block font-display text-[clamp(26px,3.4vw,44px)] leading-[1.06] font-semibold tracking-[-0.03em] text-white">
+                {slide.big}
+              </span>
+              {slide.rest && (
+                <span class="mt-3 block text-[17px] font-medium text-screen/90">{slide.rest}</span>
+              )}
+            </h2>
+            <p class="mt-2.5 font-mono text-[12.5px] leading-[1.5] text-screen/75">{slide.note}</p>
+            <a
+              href={slide.link.href}
+              class="mt-4 inline-flex min-h-[44px] items-center font-mono text-[12.5px] text-screen underline-offset-4 hover:underline"
+            >
+              {slide.link.label} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="flex items-center gap-2.5 px-6 pb-4 sm:px-8">
+    <div class="flex flex-1 gap-2">
+      {
+        slides.map((slide, index) => (
+          <button
+            type="button"
+            data-dot
+            aria-current={index === 0 ? 'true' : undefined}
+            aria-label={`Слайд ${index + 1}: ${slide.kicker}`}
+            class="dot flex h-11 min-w-[44px] items-center justify-center px-[5px]"
+          >
+            <span class="block h-[3px] w-[34px] rounded-[2px] bg-screen/30" aria-hidden="true" />
+          </button>
+        ))
+      }
+    </div>
+    <button
+      type="button"
+      data-prev
+      aria-label="Предыдущий слайд"
+      class="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-screen/40 text-[15px] text-screen transition-colors duration-200 hover:bg-accent/30"
+      >←</button
+    >
+    <button
+      type="button"
+      data-next
+      aria-label="Следующий слайд"
+      class="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-screen/40 text-[15px] text-screen transition-colors duration-200 hover:bg-accent/30"
+      >→</button
+    >
+  </div>
+</section>
+
+<style>
+  /* Полоса прокрутки трека не нужна: положение показывают индикаторы. */
+  .track {
+    scrollbar-width: none;
+  }
+  .track::-webkit-scrollbar {
+    display: none;
+  }
+  .dot[aria-current='true'] span {
+    background: var(--color-screen);
+  }
+</style>

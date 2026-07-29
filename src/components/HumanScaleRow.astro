@@ -1,0 +1,61 @@
+---
+import { SITE } from '../config/site';
+import { DIAGONALS } from '../data/diagonals';
+import ScreenCard from './ScreenCard.astro';
+
+// Ряд честного масштаба: 1 см = 1.28 px на десктопе (фиксация дизайн-системы) и 1 см = 1 px
+// на мобиле, чтобы ряд оставался читаемым в горизонтальной прокрутке. Из одного и того же
+// --px-per-cm считаются ширины панелей и рост человека — иначе сравнение было бы враньём.
+const HUMAN_CM = 175;
+const humanHeight = `calc(var(--px-per-cm) * ${HUMAN_CM})`;
+// viewBox обрезан по фактическим границам фигуры (по вертикали 0.5…149.6, замер getBBox):
+// в исходном боксе 60 × 170 низ был пустым, силуэт висел над «полом» ряда, а его рост
+// читался как ~154 см вместо 175. Ширину считаем от роста, чтобы пропорция не поехала.
+const humanWidth = `calc(var(--px-per-cm) * ${HUMAN_CM} * 60 / 149.1)`;
+---
+
+<div id="scale-row" class="rounded-box border border-line bg-surface p-4 sm:p-6">
+  <div class="row flex items-stretch gap-6 overflow-x-auto pb-2">
+    {DIAGONALS.map((d) => <ScreenCard d={d} heading="h3" />)}
+
+    <div class="flex w-fit flex-none flex-col items-center">
+      <div class="flex items-end" style="min-height: var(--screen-slot)">
+        <svg
+          viewBox="0 0.5 60 149.1"
+          role="img"
+          aria-label="Силуэт человека ростом 175 сантиметров"
+          class="fill-dim opacity-45"
+          style={`height:${humanHeight}; width:${humanWidth}`}
+        >
+          <circle cx="30" cy="9" r="8.5"></circle>
+          <path
+            d="M21 21 h18 a6 6 0 0 1 6 6 l3 29 a3 3 0 0 1-5.9 .6 l-3.1-21 v21 l3 24 a4 4 0 0 1 0 2 l-4 42 -2 25 h-6.5 l1-27 -1.5-21 -1.5 21 1 27 h-6.5 l-2-25 -4-42 a4 4 0 0 1 0-2 l3-24 v-21 l-3.1 21 a3 3 0 0 1-5.9-.6 l3-29 a6 6 0 0 1 6-6 z"
+          ></path>
+        </svg>
+      </div>
+      <p data-human-caption class="mt-2.5 font-mono text-[10.5px] whitespace-nowrap text-dim">
+        рост 175&nbsp;см
+      </p>
+    </div>
+  </div>
+
+  <div class="mt-6 border-t border-line pt-5">
+    <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">В цену позиции входят</p>
+    <ul class="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11.5px] text-text">
+      {SITE.included.map((item) => <li>{item}</li>)}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .row {
+    --px-per-cm: 1.28px;
+    /* Общий «пол»: экраны и человек стоят на одной линии, поэтому слот равен росту человека. */
+    --screen-slot: calc(var(--px-per-cm) * 175);
+  }
+  @media (max-width: 768px) {
+    .row {
+      --px-per-cm: 1px;
+    }
+  }
+</style>

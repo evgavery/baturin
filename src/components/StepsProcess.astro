@@ -1,0 +1,58 @@
+---
+// Как мы работаем — ТЗ §5.1 п.7. Шаги читаются как процесс: у первых двух — срок,
+// у остальных — что именно происходит; декоративной нумерации «01/02/03» нет.
+const STEPS = [
+  {
+    kicker: 'Заявка · 2\u00A0минуты',
+    text: 'Форма, квиз или сообщение в мессенджер. Достаточно даты, площадки и примерного состава.',
+  },
+  {
+    kicker: 'Смета · 30\u00A0минут',
+    text: 'Присылаем в ваш мессенджер: позиции, монтаж, логистика, дежурство — без «уточним позже».',
+  },
+  {
+    kicker: 'Договор и счёт',
+    text: 'Безнал, ЭДО, закрывающие документы. Работаем с тендерными процедурами и рамочными договорами.',
+  },
+  {
+    kicker: 'Монтаж и дежурство',
+    text: 'Заезд в окно площадки, ночная сборка, техник на смене и демонтаж сразу после мероприятия.',
+  },
+];
+---
+
+<ol class="steps grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+  {
+    STEPS.map((step) => (
+      <li class="step relative rounded-box border border-line bg-surface p-6">
+        <p class="font-mono text-[11.5px] tracking-[0.1em] text-focus uppercase">{step.kicker}</p>
+        <p class="mt-3.5 text-[15px] text-text">{step.text}</p>
+      </li>
+    ))
+  }
+</ol>
+
+<style>
+  /* Линия-коннектор между шагами: горизонтальная в ряд, вертикальная в одну колонку. */
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    background: var(--color-line-strong);
+  }
+  @media (min-width: 1024px) {
+    .step:not(:last-child)::after {
+      top: 50%;
+      left: 100%;
+      width: var(--spacing-bento);
+      height: 1px;
+    }
+  }
+  @media (max-width: 639px) {
+    .step:not(:last-child)::after {
+      top: 100%;
+      left: 50%;
+      width: 1px;
+      height: var(--spacing-bento);
+    }
+  }
+</style>

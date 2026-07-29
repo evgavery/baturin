@@ -1,0 +1,62 @@
+---
+interface Props {
+  /** Префикс id: на странице две формы с одинаковыми полями, id обязаны различаться. */
+  idPrefix: string;
+  legend?: string;
+}
+
+const { idPrefix, legend = 'Куда отправить смету' } = Astro.props;
+
+// Порядок и подписи каналов одинаковы во всех формах и в квизе (ТЗ §6.1 шаг 3, §6.2, §6.3).
+const CHANNELS = [
+  { value: 'telegram', label: 'Telegram' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'max', label: 'MAX' },
+  { value: 'email', label: 'E-mail' },
+  { value: 'call', label: 'Позвоните мне' },
+];
+---
+
+<fieldset class="min-w-0">
+  <legend class="mb-2 font-mono text-[11px] tracking-[0.1em] text-dim uppercase">{legend}</legend>
+  <div class="flex flex-wrap gap-2.5">
+    {
+      CHANNELS.map((channel, index) => (
+        <label class="chip flex min-h-[48px] cursor-pointer items-center gap-2.5 rounded-sm border border-line-strong px-4 text-[14px] text-text transition-colors duration-200 hover:border-line-on-strong has-[:checked]:border-accent has-[:checked]:text-screen">
+          <input
+            type="radio"
+            name="channel"
+            value={channel.value}
+            id={`${idPrefix}-channel-${channel.value}`}
+            checked={index === 0}
+            class="sr-only"
+          />
+          <span class="ring flex h-4 w-4 flex-none items-center justify-center rounded-full border border-dim">
+            <span class="dot h-2 w-2 rounded-full bg-accent" />
+          </span>
+          {channel.label}
+        </label>
+      ))
+    }
+  </div>
+</fieldset>
+
+<style>
+  .chip:has(input:checked) {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  }
+  .chip:has(input:checked) .ring {
+    border-color: var(--color-accent);
+  }
+  .dot {
+    opacity: 0;
+  }
+  .chip:has(input:checked) .dot {
+    opacity: 1;
+  }
+  /* Сам radio визуально скрыт, поэтому обводку фокуса рисуем на чипе. */
+  .chip:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+</style>

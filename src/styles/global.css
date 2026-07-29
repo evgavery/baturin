@@ -94,8 +94,17 @@
   box-shadow: var(--shadow-glow-md);
 }
 
+/* Тема тёмная: нативные контролы (чекбоксы, селекты, скроллбары) должны быть тёмными тоже. */
+:root { color-scheme: dark; }
 body { @apply bg-bg text-text font-body; }
 :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  /* Задержку и повторы глушим тоже: с animation-fill-mode: both отложенный кадр «from»
+     держал бы элемент невидимым все свои 120–360 мс, несмотря на нулевую длительность. */
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

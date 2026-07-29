@@ -1,0 +1,155 @@
+---
+import { SITE } from '../config/site';
+import { POLICY_LINK } from '../data/nav';
+import ChannelRadios from './ChannelRadios.astro';
+
+interface Props {
+  /** 'short' — короткая форма прямо в блоке (ТЗ §6.3); без пропса блок ведёт в квиз. */
+  formType?: 'short';
+}
+
+const { formType } = Astro.props;
+
+const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
+const field =
+  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
+---
+
+<div class="screen-on rounded-box px-5 py-9 sm:px-10 sm:py-12">
+  <div class="mx-auto max-w-[720px] text-center">
+    <h2
+      class="font-display text-[clamp(26px,3.4vw,42px)] leading-[1.08] font-semibold tracking-[-0.025em] text-white"
+    >
+      Получить смету
+    </h2>
+    <p class="mx-auto mt-4 max-w-[56ch] text-[17px] text-screen/90">
+      Пришлите дату, площадку и что нужно на площадке — вернёмся со сметой в течение 30&nbsp;минут в
+      рабочее время.
+    </p>
+  </div>
+
+  {
+    formType === 'short' ? (
+      /* Контракт Task 12 — тот же, что у #qualify-form: [data-errors] внутри формы,
+         [data-success] соседним блоком в той же карточке. */
+      <div class="mx-auto mt-8 max-w-[720px] rounded-box border border-line-strong bg-bg/80 p-5 text-left sm:p-7">
+        <form id="short-form" class="relative">
+          <div class="grid gap-bento sm:grid-cols-2">
+            <div>
+              <label class={label} for="short-name">
+                Имя
+              </label>
+              <input
+                id="short-name"
+                name="name"
+                type="text"
+                required
+                autocomplete="name"
+                class={field}
+                placeholder="Как к вам обращаться"
+              />
+            </div>
+            <div>
+              <label class={label} for="short-contact">
+                Контакт · телефон, ник или e-mail
+              </label>
+              <input
+                id="short-contact"
+                name="contact"
+                type="text"
+                required
+                class={`${field} font-mono`}
+                placeholder="+7 … или name@company.ru"
+              />
+            </div>
+          </div>
+
+          <div class="mt-bento">
+            <label class={label} for="short-comment">
+              Комментарий
+            </label>
+            <input
+              id="short-comment"
+              name="comment"
+              type="text"
+              class={field}
+              placeholder="Дата, площадка, что нужно"
+            />
+          </div>
+
+          <div class="mt-bento">
+            <ChannelRadios idPrefix="short" />
+          </div>
+
+          <label class="mt-6 flex min-h-[44px] cursor-pointer items-start gap-3 py-1.5">
+            <input
+              type="checkbox"
+              name="consent"
+              id="short-consent"
+              required
+              class="mt-0.5 h-5 w-5 flex-none accent-accent"
+            />
+            <span class="max-w-[62ch] text-[13.5px] leading-[1.5] text-dim">
+              Согласен на обработку персональных данных и с{' '}
+              <a href={POLICY_LINK.href} class="text-focus underline underline-offset-2">
+                политикой конфиденциальности
+              </a>
+            </span>
+          </label>
+
+          {/* Ловушка для ботов: поле скрыто и выведено из фокуса. */}
+          <input
+            type="text"
+            name="website"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+            class="absolute -left-[9999px] h-0 w-0 opacity-0"
+          />
+
+          <p data-errors role="alert" hidden class="mt-4 text-[13.5px] text-err" />
+
+          <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+            <button
+              type="submit"
+              class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            >
+              Отправить заявку
+            </button>
+            <a
+              href={SITE.phoneHref}
+              data-goal="click_phone"
+              class="flex min-h-[48px] items-center font-mono text-[15px] text-screen"
+            >
+              {SITE.phone}
+            </a>
+          </div>
+        </form>
+
+        <div data-success hidden class="mt-6 rounded-sm border border-ok bg-ok/10 p-6">
+          <p class="text-[17px] font-semibold text-screen">Заявка у менеджера</p>
+          <p class="mt-1.5 text-[15px] text-text">
+            Смету пришлём в выбранный канал в течение 30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+      </div>
+    ) : (
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <button
+          type="button"
+          data-quiz-open
+          class="flex min-h-[48px] items-center justify-center rounded-full bg-screen px-8 text-[16px] font-semibold text-bg transition-colors duration-200 hover:bg-white"
+        >
+          Получить смету
+        </button>
+        <a
+          href={SITE.phoneHref}
+          data-goal="click_phone"
+          class="flex min-h-[48px] items-center justify-center rounded-full border border-screen/50 px-8 font-mono text-[15px] text-screen transition-colors duration-200 hover:bg-screen/10"
+        >
+          {SITE.phone}
+        </a>
+      </div>
+    )
+  }
+</div>

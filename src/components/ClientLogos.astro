@@ -1,0 +1,28 @@
+---
+import { SITE } from '../config/site';
+
+// Полоса логотипов — ТЗ §5.1 п.8: рендерится только при непустом списке, логотипы не выдумываем.
+const logos = SITE.clientLogos;
+---
+
+{
+  logos.length > 0 && (
+    <section id="clients" class="mt-20">
+      <p class="mb-4 font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+        С нами работают
+      </p>
+      <div class="grid grid-cols-2 gap-bento sm:grid-cols-3 lg:grid-cols-6">
+        {logos.map((logo) => (
+          <div
+            role="img"
+            aria-label={logo.name}
+            class="flex h-[70px] items-center justify-center rounded-sm border border-line px-4 text-dim"
+          >
+            {/* Разметка логотипа приходит из конфига проекта, а не от пользователя. */}
+            <Fragment set:html={logo.svg} />
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}

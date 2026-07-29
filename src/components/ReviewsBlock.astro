@@ -1,0 +1,35 @@
+---
+import { SITE } from '../config/site';
+import { REVIEWS } from '../data/reviews';
+import JsonLd from './seo/JsonLd.astro';
+
+// Отзывы — ТЗ §5.1 п.9: 3 текстовых отзыва + разметка Review. Оценок клиент не давал,
+// поэтому reviewRating не выдумываем.
+const reviews = REVIEWS.slice(0, 3);
+
+const reviewLd = (review: (typeof REVIEWS)[number]) => ({
+  '@context': 'https://schema.org',
+  '@type': 'Review',
+  reviewBody: review.text,
+  author: { '@type': 'Person', name: review.author },
+  itemReviewed: { '@type': 'LocalBusiness', name: SITE.brandName },
+});
+---
+
+<div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-3">
+  {
+    reviews.map((review) => (
+      <article class="flex flex-col rounded-box border border-line bg-surface p-6">
+        <blockquote class="text-[16px] leading-[1.55] text-screen">{review.text}</blockquote>
+        <div class="mt-auto pt-5">
+          <p class="text-[14.5px] text-text">{review.author}</p>
+          <p class="mt-1 font-mono text-[12px] text-dim">
+            {review.role} · {review.company}
+          </p>
+        </div>
+      </article>
+    ))
+  }
+</div>
+
+{reviews.map((review) => <JsonLd data={reviewLd(review)} />)}

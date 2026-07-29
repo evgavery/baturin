@@ -1,0 +1,64 @@
+---
+interface Props {
+  kind: 'plasma' | 'led' | 'touch' | 'stream';
+}
+
+const { kind } = Astro.props;
+
+// Фронтальные схемы оборудования (ТЗ §7): линейная графика на currentColor, без фотостоков.
+// Кабинеты LED-экрана — сетка 4 × 2, рисуем циклом, чтобы не плодить одинаковые прямоугольники.
+const LED_CABINETS = [0, 1, 2, 3].flatMap((column) =>
+  [0, 1].map((row) => ({ x: 16 + column * 42, y: 12 + row * 42 })),
+);
+---
+
+<svg
+  viewBox="0 0 200 120"
+  width="100%"
+  height="96"
+  aria-hidden="true"
+  class="mb-5 text-focus"
+  fill="currentColor"
+  fill-opacity="0.18"
+  stroke="currentColor"
+  stroke-width="1.4"
+>
+  {
+    kind === 'plasma' && (
+      <>
+        <rect x="22" y="8" width="156" height="88" rx="4" />
+        <rect x="94" y="96" width="12" height="12" stroke="none" fill-opacity="0.5" />
+        <rect x="68" y="108" width="64" height="5" rx="2.5" stroke="none" fill-opacity="0.5" />
+      </>
+    )
+  }
+  {
+    kind === 'led' && (
+      <>
+        {LED_CABINETS.map((cabinet) => (
+          <rect x={cabinet.x} y={cabinet.y} width="42" height="42" />
+        ))}
+        <rect x="16" y="102" width="168" height="4" rx="2" stroke="none" fill-opacity="0.5" />
+      </>
+    )
+  }
+  {
+    kind === 'touch' && (
+      <>
+        <rect x="66" y="4" width="68" height="100" rx="5" />
+        <rect x="56" y="104" width="88" height="6" rx="3" stroke="none" fill-opacity="0.5" />
+      </>
+    )
+  }
+  {
+    kind === 'stream' && (
+      <>
+        <rect x="30" y="26" width="86" height="58" rx="5" />
+        <path d="M116 44 l34-14 v58 l-34-14 z" />
+        <circle cx="150" cy="30" r="4" stroke="none" fill-opacity="0.6" />
+        <rect x="60" y="84" width="26" height="18" stroke="none" fill-opacity="0.5" />
+        <rect x="40" y="102" width="66" height="5" rx="2.5" stroke="none" fill-opacity="0.5" />
+      </>
+    )
+  }
+</svg>

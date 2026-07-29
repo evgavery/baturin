@@ -1,17 +1,295 @@
 ---
-// Временная заглушка — полноценная главная собирается в Task 4.
+import CtaBlock from '../components/CtaBlock.astro';
+import ClientLogos from '../components/ClientLogos.astro';
+import DirectionCard from '../components/DirectionCard.astro';
+import EquipmentIcon from '../components/EquipmentIcon.astro';
+import FaqBlock from '../components/FaqBlock.astro';
+import FlagshipBlock from '../components/FlagshipBlock.astro';
+import HeroSlider from '../components/HeroSlider.astro';
+import HumanScaleRow from '../components/HumanScaleRow.astro';
+import QualifyForm from '../components/QualifyForm.astro';
+import ReviewsBlock from '../components/ReviewsBlock.astro';
+import StepsProcess from '../components/StepsProcess.astro';
+import ProductLd from '../components/seo/ProductLd.astro';
 import { SITE } from '../config/site';
+import { DIAGONALS } from '../data/diagonals';
+import { FAQ_HOME } from '../data/faq';
+import { AGENCY_LINK, LED_LINK, PLASMA_LINK, STREAM_LINK, TOUCH_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
+import { rub } from '../lib/format';
+
+// Порядок блоков — строго ТЗ §5.1 v1.1 (1–12). Блока «Почему мы» на главной нет:
+// его аргументы разложены по ответам FAQ и шагам процесса.
+const title = `Аренда экранов для мероприятий в Москве — смета за 30 минут | ${SITE.brandName}`;
+const description = `Плазменные панели 55–98″, LED-экраны от ${rub(SITE.prices.ledM2)}/м², тач-панели и видеотрансляции. Монтаж ночью, техник на площадке, безнал и закрывающие. Смета за 30 минут в Telegram, WhatsApp или MAX.`;
+
+const facts = [
+  {
+    label: 'Смета',
+    value: '30\u00A0мин',
+    note: 'в Telegram, WhatsApp или MAX — в рабочее время',
+    delay: '120ms',
+  },
+  {
+    label: 'Цена панели',
+    value: `от ${rub(SITE.prices.plasma['55'].d1)}`,
+    note: 'за сутки, 55″ — с доставкой и монтажом',
+    delay: '240ms',
+  },
+  {
+    label: 'Документы',
+    value: 'Безнал · ЭДО',
+    note: 'договор, счёт и закрывающие в срок',
+    delay: '360ms',
+  },
+];
+
+const directions = [
+  {
+    kind: 'plasma' as const,
+    link: PLASMA_LINK,
+    priceFrom: `от ${rub(SITE.prices.plasma['55'].d1)}/сутки`,
+    note: '55–98″ на стойке, кронштейне или столе. Доставка и монтаж включены.',
+  },
+  {
+    kind: 'led' as const,
+    link: LED_LINK,
+    priceFrom: `от ${rub(SITE.prices.ledM2)}/м²`,
+    note: `${SITE.park.ledTotalM2}\u00A0м² кабинетов indoor и outdoor: собираем экран любого размера и шага.`,
+  },
+  {
+    kind: 'touch' as const,
+    link: TOUCH_LINK,
+    priceFrom: `от ${rub(SITE.prices.touch)}/сутки`,
+    note: 'Регистрация гостей, навигация по стенду, интерактивные каталоги.',
+  },
+  {
+    kind: 'stream' as const,
+    link: STREAM_LINK,
+    priceFrom: `от ${rub(SITE.prices.stream)}`,
+    note: 'Гибридные конференции, запись, вывод на экраны в зале и в сеть.',
+  },
+];
+
+const h2 =
+  'font-display text-[clamp(24px,2.8vw,34px)] leading-[1.15] font-medium tracking-[-0.02em] text-screen';
 ---
 
-<Base
-  title={`Аренда экранов для мероприятий в Москве — смета за 30 минут | ${SITE.brandName}`}
-  description="Плазменные панели 55–98″, LED-экраны, тач-панели и видеотрансляции в аренду. Доставка, монтаж и техник на площадке. Смета за 30 минут в Telegram, WhatsApp или MAX."
->
-  <section class="mx-auto max-w-[1200px] px-4 pt-12 pb-16 sm:px-6">
-    <h1 class="font-display text-[clamp(30px,4.2vw,52px)] leading-[1.05] font-semibold text-screen">
-      Каркас
-    </h1>
-    <p class="mt-4 font-mono text-dim">Шапка, подвал, док мессенджеров и SEO-обвязка подключены</p>
-  </section>
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6">
+    {/* 1. Hero: статичный H1 + слайдер парка + боксы-факты */}
+    <section id="hero" class="grid gap-bento md:grid-cols-12">
+      <div
+        class="flex min-w-0 flex-col justify-between gap-8 rounded-box border border-line bg-surface p-6 sm:p-9 md:col-span-6 lg:col-span-7 lg:min-h-[340px]"
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+            Москва · AV-оборудование в аренду
+          </p>
+          <h1
+            class="mt-5 font-display text-[clamp(30px,4.2vw,52px)] leading-[1.05] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Аренда экранов для мероприятий в Москве
+          </h1>
+          <p class="mt-4 max-w-[46ch] text-[17.5px] leading-[1.5] text-text">
+            {SITE.slogan}. Плазмы, LED-экраны, тач-панели и трансляции. Смета за 30&nbsp;минут — в
+            Telegram, WhatsApp или MAX.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button
+            type="button"
+            data-quiz-open
+            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            >Получить смету</button
+          >
+          <a
+            href={SITE.phoneHref}
+            data-goal="click_phone"
+            class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            >Позвонить</a
+          >
+        </div>
+      </div>
+
+      <div data-screen-in class="min-w-0 md:col-span-6 lg:col-span-5">
+        <HeroSlider />
+      </div>
+
+      {
+        facts.map((fact) => (
+          <div
+            data-screen-in
+            style={`animation-delay:${fact.delay}`}
+            class="min-w-0 rounded-box border border-line bg-surface p-6 md:col-span-4"
+          >
+            <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">{fact.label}</p>
+            <p class="mt-3.5 font-display text-[30px] leading-none font-semibold text-screen">
+              {fact.value}
+            </p>
+            <p class="mt-2.5 text-[14.5px] text-text">{fact.note}</p>
+          </div>
+        ))
+      }
+    </section>
+
+    {/* 2. Форма подбора */}
+    <section id="podbor" class="mt-bento">
+      <QualifyForm />
+    </section>
+
+    {/* 3. Четыре направления */}
+    <section id="directions" class="mt-20">
+      <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+        <h2 class={h2}>Направления</h2>
+        <span class="font-mono text-[12px] text-dim"
+          >4 направления — один подрядчик на площадку</span
+        >
+      </div>
+      <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+        {
+          directions.map((direction) => (
+            <DirectionCard
+              title={direction.link.label}
+              href={direction.link.href}
+              priceFrom={direction.priceFrom}
+              note={direction.note}
+            >
+              <EquipmentIcon kind={direction.kind} />
+            </DirectionCard>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* 4. Ходовые позиции в честном масштабе */}
+    <section id="diagonals" class="mt-20">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+        <h2 class={h2}>Диагонали в одном масштабе</h2>
+        <a
+          href={PLASMA_LINK.href}
+          class="inline-flex min-h-[44px] items-center font-mono text-[12.5px] text-focus"
+          >все плазмы →</a
+        >
+      </div>
+      <p class="mb-6 max-w-[70ch] text-[15px] text-dim">
+        Карточки отрисованы от реальных габаритов, рядом — человек ростом 175&nbsp;см в том же
+        масштабе. Так видно, что 98″ — это не «чуть больше», а другая история монтажа и заноса.
+      </p>
+      <HumanScaleRow />
+      {
+        DIAGONALS.map((diagonal) => (
+          <ProductLd
+            name={`Аренда плазменной панели ${diagonal.size} дюймов`}
+            price={diagonal.prices.d1}
+            url={`/plazmy/${diagonal.size}/`}
+          />
+        ))
+      }
+    </section>
+
+    {/* 5. Флагман и 6. «Нужно что-то ещё?» */}
+    <section class="mt-20 grid gap-bento md:grid-cols-12">
+      <div class="min-w-0 md:col-span-7">
+        <FlagshipBlock />
+      </div>
+      <div
+        id="more"
+        class="flex min-w-0 flex-col rounded-box border border-line bg-surface p-6 md:col-span-5"
+      >
+        <h2 class="text-[19px] font-semibold text-screen">Нужно что-то ещё?</h2>
+        <p class="mt-2.5 max-w-[46ch] text-[14.5px] text-text">
+          В собственном парке и партнёрской сети — сотни позиций: видеостены, звук, свет, ноутбуки,
+          коммутация. Опишите задачу — соберём комплект и пришлём смету.
+        </p>
+        <button
+          type="button"
+          data-quiz-open
+          data-preset={JSON.stringify({ services: ['consult'] })}
+          class="mt-6 flex min-h-[48px] w-fit items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+          >Отправить запрос</button
+        >
+      </div>
+    </section>
+
+    {/* 7. Как мы работаем */}
+    <section id="process" class="mt-20">
+      <h2 class={`${h2} mb-6`}>Как мы работаем</h2>
+      <StepsProcess />
+    </section>
+
+    {/* 8. Клиенты — рендерится только при непустом списке логотипов */}
+    <ClientLogos />
+
+    {/* 9. Отзывы */}
+    <section id="reviews" class="mt-20">
+      <h2 class={`${h2} mb-6`}>Отзывы</h2>
+      <ReviewsBlock />
+    </section>
+
+    {/* 10. Тизер агентствам */}
+    <section id="agencies" class="mt-20">
+      <div
+        class="agency grid gap-8 rounded-box border border-line-strong bg-surface p-6 sm:p-9 md:grid-cols-2 md:items-center"
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">Агентствам</p>
+          <h2 class={`${h2} mt-3.5 max-w-[26ch]`}>Работаем от вашего имени</h2>
+          <p class="mt-3.5 max-w-[52ch] text-[16px] text-text">
+            White label: техника без наших логотипов, техник в чёрном, сметы в вашем формате.
+            Персональный менеджер на связи в день монтажа.
+          </p>
+        </div>
+        <div class="flex flex-col items-start gap-5">
+          <p class="max-w-[46ch] font-mono text-[13px] leading-[1.8] text-text">
+            {SITE.agencyTerms}
+          </p>
+          <a
+            href={AGENCY_LINK.href}
+            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-accent-soft"
+            >Условия для агентств</a
+          >
+        </div>
+      </div>
+    </section>
+
+    {/* 11. FAQ */}
+    <section id="faq" class="mt-20">
+      <h2 class={`${h2} mb-6`}>Частые вопросы</h2>
+      <FaqBlock items={FAQ_HOME} withJsonLd />
+    </section>
+
+    {/* 12. CTA */}
+    <section id="cta" class="mt-20">
+      <CtaBlock formType="short" />
+    </section>
+  </div>
 </Base>
+
+<script>
+  import '../islands/hero-slider';
+</script>
+
+<style>
+  /* Одна оркестрованная сцена «включения экранов» в hero: только opacity, 4 бокса,
+     задержки 0/120/240/360 мс — вся сцена укладывается в 600 мс. Под prefers-reduced-motion
+     анимации глушит база (global.css). */
+  @keyframes screen-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  [data-screen-in] {
+    animation: screen-in 240ms ease-out both;
+  }
+  .agency {
+    background-image: linear-gradient(
+      120deg,
+      color-mix(in srgb, var(--color-accent) 12%, transparent),
+      transparent 60%
+    );
+  }
+</style>

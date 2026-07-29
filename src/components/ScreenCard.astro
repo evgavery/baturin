@@ -1,0 +1,97 @@
+---
+import type { Diagonal } from '../data/diagonals';
+import { rub } from '../lib/format';
+
+interface Props {
+  d: Diagonal;
+  /** Тег подписи диагонали: на витрине это заголовок карточки, вне ряда — просто цифра. */
+  heading?: 'h2' | 'h3' | 'div';
+}
+
+const { d, heading = 'div' } = Astro.props;
+const Heading = heading;
+
+// Масштаб ряда задаёт родитель (HumanScaleRow); вне ряда карточка рисуется в базовом масштабе DS.
+const width = `calc(var(--px-per-cm, 1.28px) * ${d.widthCm})`;
+const height = `calc(var(--px-per-cm, 1.28px) * ${d.heightCm})`;
+// Кегль цифры растёт вместе с карточкой: 28 → 52px при масштабе 1.28.
+const digitSize = `calc(var(--px-per-cm, 1.28px) * ${d.heightCm} * 0.3)`;
+const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
+---
+
+<div
+  data-screen-card={d.size}
+  class="card flex flex-none flex-col"
+  style={`width:${width}`}
+>
+  {/* Общий «пол» ряда задаёт --screen-slot: экраны и человек стоят на одной линии. */}
+  <div class="flex items-end justify-center" style="min-height: var(--screen-slot, 0px)">
+    <div class="flex w-full flex-col items-center">
+      <Heading
+        class="panel flex w-full items-center justify-center rounded-[10px] border border-line-strong bg-bg-deep p-[3px]"
+        style={`height:${height}`}
+      >
+        <span
+          class="screen screen-on flex aspect-[16/9] w-full items-center justify-center rounded-[8px]"
+        >
+          <span
+            class="digit font-display leading-none font-semibold text-screen"
+            style={`font-size:${digitSize}`}>{d.size}″</span
+          >
+        </span>
+      </Heading>
+      <span class="block h-[9px] w-[10px] bg-line-strong" aria-hidden="true"></span>
+      <span class="block h-[3px] w-[38%] rounded-full bg-line-strong" aria-hidden="true"></span>
+    </div>
+  </div>
+
+  <div class="dim-line mt-2.5 flex items-center gap-1.5 font-mono text-[10.5px] text-dim">
+    <span>{d.widthCm}&nbsp;см</span>
+  </div>
+  <p class="mt-1 font-mono text-[11.5px] text-text">
+    Ш&nbsp;{d.widthCm} × В&nbsp;{d.heightCm}&nbsp;см
+  </p>
+  <p data-price class="mt-0.5 font-mono text-[12.5px] text-screen">
+    от {rub(d.prices.d1)}/сутки
+  </p>
+  {/* Краткая формулировка «что включено» — по ТЗ §5.1 п.4; полный состав из SITE.included
+      печатается один раз под рядом карточек. */}
+  <p class="mt-2 mb-3 font-mono text-[10.5px] leading-[1.6] text-dim">
+    доставка · монтаж · стойка · кабели
+  </p>
+  <button
+    type="button"
+    data-quiz-open
+    data-preset={preset}
+    class="mt-auto flex min-h-[44px] w-full items-center justify-center rounded-full bg-accent px-3 text-[13.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-sm active:bg-accent-press"
+    aria-label={`Добавить панель ${d.size} дюймов в смету`}>В смету</button
+  >
+</div>
+
+<style>
+  .screen {
+    transition: box-shadow 250ms ease;
+  }
+  .card:hover .screen {
+    box-shadow: var(--shadow-glow-lg);
+  }
+  .digit {
+    /* Свет от глифа: цифра «горит» на экране, отдельного цвета для этого не заводим. */
+    text-shadow: 0 0 20px color-mix(in srgb, var(--color-focus) 55%, transparent);
+  }
+  /* Размерная линия как на чертеже: засечка — линия — подпись — линия — засечка. */
+  .dim-line::before,
+  .dim-line::after {
+    content: '';
+    flex: 1;
+    height: 7px;
+    background:
+      linear-gradient(currentColor, currentColor) left center / 1px 7px no-repeat,
+      linear-gradient(currentColor, currentColor) center / 100% 1px no-repeat;
+  }
+  .dim-line::after {
+    background-position:
+      right center,
+      center;
+  }
+</style>

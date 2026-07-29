@@ -1,0 +1,31 @@
+---
+import { SITE } from '../../config/site';
+import JsonLd from './JsonLd.astro';
+
+interface Props {
+  name: string;
+  /** Цена «от» за сутки, ₽. */
+  price: number;
+  /** Путь или абсолютный адрес страницы позиции. */
+  url: string;
+}
+
+const { name, price, url } = Astro.props;
+
+const absolute = new URL(url, SITE.url).href;
+const data = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name,
+  url: absolute,
+  offers: {
+    '@type': 'Offer',
+    price,
+    priceCurrency: 'RUB',
+    availability: 'https://schema.org/InStock',
+    url: absolute,
+  },
+};
+---
+
+<JsonLd data={data} />

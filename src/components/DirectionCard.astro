@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+  /** Готовая строка цены «от …» — считается на странице из SITE.prices. */
+  priceFrom: string;
+  href: string;
+  note: string;
+}
+
+const { title, priceFrom, href, note } = Astro.props;
+---
+
+<a
+  href={href}
+  class="card flex flex-col rounded-box border border-line bg-surface p-6 transition-[border-color,box-shadow] duration-200 hover:border-line-on-strong hover:shadow-glow-sm"
+>
+  <slot />
+  <h3 class="text-[20px] font-semibold text-screen">{title}</h3>
+  <p class="mt-2 mb-5 text-[14.5px] text-text">{note}</p>
+  <div class="mt-auto flex items-center justify-between font-mono text-[12.5px] text-dim">
+    <span>{priceFrom}</span>
+    <span class="text-focus" aria-hidden="true">→</span>
+  </div>
+</a>

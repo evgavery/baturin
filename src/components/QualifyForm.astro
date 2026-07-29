@@ -1,0 +1,159 @@
+---
+import { SITE } from '../config/site';
+import { AGENCY_LINK, POLICY_LINK } from '../data/nav';
+import ChannelRadios from './ChannelRadios.astro';
+
+// Форма подбора под hero (ТЗ §6.2). Разметка готова целиком, обработчик подключается в Task 12:
+// до этого форма ничего не отправляет.
+const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
+const field =
+  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
+
+const INTERESTS = [
+  { value: 'plasma', label: 'Плазменные панели' },
+  { value: 'led', label: 'LED-экран' },
+  { value: 'touch', label: 'Тач-панели' },
+  { value: 'stream', label: 'Видеотрансляция' },
+  { value: 'complex', label: 'Комплекс под задачу' },
+];
+
+const CLIENT_TYPES = [
+  { value: 'agency', label: 'Ивент-агентство' },
+  { value: 'organizer', label: 'Организатор мероприятий' },
+  { value: 'company', label: 'Компания (прямой заказчик)' },
+  { value: 'other', label: 'Другое' },
+];
+---
+
+<div class="rounded-box border border-line-strong bg-surface p-5 shadow-glow-sm sm:p-8">
+  <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+    <h2
+      class="font-display text-[clamp(22px,2.4vw,30px)] leading-[1.2] font-medium tracking-[-0.015em] text-screen"
+    >
+      Подберём оборудование под задачу
+    </h2>
+    <span class="font-mono text-[12px] text-dim">ответим в течение 30&nbsp;минут</span>
+  </div>
+
+  <form id="qualify-form" class="relative">
+    <div class="grid gap-bento sm:grid-cols-2">
+      <div>
+        <label class={label} for="qualify-interest">Что вас интересует</label>
+        <select id="qualify-interest" name="interest" class={field}>
+          {INTERESTS.map((item) => <option value={item.value}>{item.label}</option>)}
+        </select>
+      </div>
+      <div>
+        <label class={label} for="qualify-client-type">Кто вы</label>
+        <select id="qualify-client-type" name="client_type" class={field}>
+          <option value="">Кто вы</option>
+          {CLIENT_TYPES.map((item) => <option value={item.value}>{item.label}</option>)}
+        </select>
+      </div>
+    </div>
+
+    <div class="mt-bento">
+      <label class={label} for="qualify-need">Что и сколько нужно</label>
+      <input
+        id="qualify-need"
+        name="need"
+        type="text"
+        class={field}
+        placeholder="Например: 2 панели 75″ и LED-задник 4×2,5 м"
+      />
+    </div>
+
+    <div class="mt-bento grid gap-bento sm:grid-cols-2">
+      <div>
+        <label class={label} for="qualify-name">Имя</label>
+        <input
+          id="qualify-name"
+          name="name"
+          type="text"
+          required
+          autocomplete="name"
+          class={field}
+          placeholder="Как к вам обращаться"
+        />
+      </div>
+      <div>
+        <label class={label} for="qualify-contact">Контакт · телефон, ник или e-mail</label>
+        <input
+          id="qualify-contact"
+          name="contact"
+          type="text"
+          required
+          class={`${field} font-mono`}
+          placeholder="+7 … или name@company.ru"
+        />
+      </div>
+    </div>
+
+    <div class="mt-bento">
+      <ChannelRadios idPrefix="qualify" />
+    </div>
+
+    <label class="mt-6 flex min-h-[44px] cursor-pointer items-start gap-3 py-1.5">
+      <input
+        type="checkbox"
+        name="consent"
+        id="qualify-consent"
+        required
+        class="mt-0.5 h-5 w-5 flex-none accent-accent"
+      />
+      <span class="max-w-[62ch] text-[13.5px] leading-[1.5] text-dim">
+        Согласен на обработку персональных данных и с <a
+          href={POLICY_LINK.href}
+          class="text-focus underline underline-offset-2">политикой конфиденциальности</a
+        >
+      </span>
+    </label>
+
+    {/* Ловушка для ботов: поле скрыто и выведено из фокуса, живой человек его не заполнит. */}
+    <input
+      type="text"
+      name="website"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+      class="absolute -left-[9999px] h-0 w-0 opacity-0"
+    />
+
+    <p data-errors role="alert" hidden class="mt-4 text-[13.5px] text-err"></p>
+
+    <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+      <button
+        type="submit"
+        class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+        >Получить предложение</button
+      >
+      <span class="font-mono text-[12px] text-dim">без звонков-«прогревов»</span>
+    </div>
+  </form>
+
+  {/* Контракт Task 12: [data-errors] внутри формы, [data-success] — соседним блоком в той же
+      карточке; обработчику остаётся спрятать форму и снять hidden с блока успеха. */}
+  <div data-success hidden class="mt-6 flex items-start gap-4 rounded-sm border border-ok bg-ok/10 p-6">
+    <span
+      class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ok text-[17px] text-bg-deep"
+      aria-hidden="true">✓</span
+    >
+    <div>
+      <p class="text-[18px] font-semibold text-screen">Заявка у менеджера</p>
+      <p class="mt-1.5 text-[15px] text-text">
+        Смету пришлём в выбранный канал. Если срочно — <a
+          href={SITE.phoneHref}
+          data-goal="click_phone"
+          class="font-mono text-focus">{SITE.phone}</a
+        >.
+      </p>
+    </div>
+  </div>
+
+  <p class="mt-6 max-w-[80ch] border-t border-line pt-5 text-[13.5px] text-dim">
+    Агентствам, организаторам мероприятий и корпоративным заказчикам — специальные условия и
+    программы скидок. <a href={AGENCY_LINK.href} class="text-focus underline underline-offset-2"
+      >Условия для агентств</a
+    >
+  </p>
+</div>
