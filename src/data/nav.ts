@@ -15,6 +15,11 @@ export const STREAM_LINK: NavLink = { href: '/videotranslyacii/', label: 'Вид
 
 export const DIRECTION_LINKS: NavLink[] = [PLASMA_LINK, LED_LINK, TOUCH_LINK, STREAM_LINK];
 
+/** Страница диагонали — дочерний адрес хаба плазм: `/plazmy/75/`. Адреса нигде не пишутся руками. */
+export function diagonalHref(size: string): string {
+  return `${PLASMA_LINK.href}${size}/`;
+}
+
 export const AGENCY_LINK: NavLink = { href: '/agentstvam/', label: 'Агентствам' };
 export const CONTACTS_LINK: NavLink = { href: '/kontakty/', label: 'Контакты' };
 

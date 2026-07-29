@@ -94,6 +94,11 @@
   box-shadow: var(--shadow-glow-md);
 }
 
+/* Заголовок секции: кегль, начертание и трекинг H2 одинаковы на всех страницах — держим в одном месте. */
+.section-title {
+  @apply font-display text-[clamp(24px,2.8vw,34px)] leading-[1.15] font-medium tracking-[-0.02em] text-screen;
+}
+
 /* Тема тёмная: нативные контролы (чекбоксы, селекты, скроллбары) должны быть тёмными тоже. */
 :root { color-scheme: dark; }
 body { @apply bg-bg text-text font-body; }

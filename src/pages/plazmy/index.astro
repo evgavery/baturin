@@ -1,0 +1,274 @@
+---
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBlock from '../../components/CtaBlock.astro';
+import FaqBlock from '../../components/FaqBlock.astro';
+import HumanScaleRow from '../../components/HumanScaleRow.astro';
+import MountMethods from '../../components/MountMethods.astro';
+import PriceTable from '../../components/PriceTable.astro';
+import { SITE } from '../../config/site';
+import { DIAGONALS } from '../../data/diagonals';
+import { FAQ_PLASMA } from '../../data/faq';
+import { HOME_LINK, PLASMA_LINK, diagonalHref } from '../../data/nav';
+import Base from '../../layouts/Base.astro';
+import { rub } from '../../lib/format';
+
+// Хаб направления по ТЗ §5.2. Кластер запросов — «аренда плазменных панелей … москва»,
+// поэтому H1 и title идут с городом, а страницы диагоналей забирают уточняющие запросы.
+const title = `Аренда плазменных панелей в Москве — от ${rub(SITE.prices.plasma['55'].d1)} | ${SITE.brandName}`;
+const description = `Плазменные и ЖК-панели 55–98″ в аренду: конференции, выставки, стенды, презентации. Доставка, монтаж, стойка и кабели в цене. Смета за 30\u00A0минут в мессенджер.`;
+
+const priceRows = DIAGONALS.map((diagonal) => ({
+  label: `Плазма ${diagonal.size}″ (${diagonal.widthCm}×${diagonal.heightCm}\u00A0см)`,
+  d1: diagonal.prices.d1,
+  d2: diagonal.prices.d2,
+  d3: diagonal.prices.d3,
+}));
+
+const priceFootnote =
+  'Первый день — полная стоимость, каждый следующий дешевле. Доставка в пределах МКАД, монтаж, стойка и кабели уже в цене; выезд за МКАД, ночные и выходные работы считаем отдельно.';
+
+const tech = [
+  {
+    label: 'Входы и кабели',
+    text: 'HDMI и USB на панели. Кабель нужной длины и переходники под USB-C и Mini DisplayPort привозим с собой.',
+  },
+  {
+    label: 'Источник',
+    text: 'Ноутбук по HDMI — или флешка: встроенный плеер читает презентации и ролики без ноутбука.',
+  },
+  {
+    label: 'Видеовстречи',
+    text: 'Zoom, Telemost и другие сервисы выводим вторым экраном. Звук отдаём на панель или на пульт зала.',
+  },
+];
+
+const facts = [
+  {
+    label: 'В парке',
+    value: `Более ${SITE.park.plasmaUnits}`,
+    note: 'плазменных панелей 55–98″, по ходовым позициям держим резерв',
+  },
+  {
+    label: 'Смета',
+    value: '30\u00A0мин',
+    note: 'в Telegram, WhatsApp или MAX — в рабочее время',
+  },
+];
+
+const plasmaPreset = JSON.stringify({ services: ['plasma'] });
+---
+
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-4 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { name: HOME_LINK.label, url: HOME_LINK.href },
+        { name: PLASMA_LINK.label, url: PLASMA_LINK.href },
+      ]}
+    />
+
+    {/* Интро направления: для чего берут панели и что уже входит в цену. */}
+    <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
+      <div
+        class="flex min-w-0 flex-col justify-between gap-8 rounded-box border border-line bg-surface p-6 sm:p-9 md:col-span-8"
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+            Москва и МО · плазменные и ЖК-панели
+          </p>
+          <h1
+            class="mt-5 max-w-[20ch] font-display text-[clamp(28px,3.8vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Аренда плазменных и ЖК-панелей в Москве
+          </h1>
+          <p class="mt-4 max-w-[62ch] text-[17px] leading-[1.5] text-text">
+            Панели 55–98″ для конференций, выставок, стендов и презентаций: слайды, ролик или
+            интерфейс продукта — без проектора и затемнения зала. В цену позиции входят доставка в
+            пределах МКАД, монтаж и демонтаж, стойка или кронштейн, кабели и коммутация. Смету
+            присылаем в мессенджер за 30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button
+            type="button"
+            data-quiz-open
+            data-preset={plasmaPreset}
+            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            >Получить смету</button
+          >
+          <a
+            href={SITE.phoneHref}
+            data-goal="click_phone"
+            class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            >Позвонить</a
+          >
+        </div>
+      </div>
+
+      <div class="grid min-w-0 gap-bento md:col-span-4">
+        {
+          facts.map((fact) => (
+            <div class="rounded-box border border-line bg-surface p-6">
+              <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">{fact.label}</p>
+              <p class="mt-3 font-display text-[30px] leading-none font-semibold text-screen">
+                {fact.value}
+              </p>
+              <p class="mt-2.5 text-[14.5px] text-text">{fact.note}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Диагонали в честном масштабе + переходы на страницы позиций. */}
+    <section id="diagonals" class="mt-20">
+      <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+        <h2 class="section-title">Диагонали</h2>
+        <span class="font-mono text-[12px] text-dim"
+          >единый масштаб · человек 175&nbsp;см для сравнения</span
+        >
+      </div>
+      <p class="mb-6 max-w-[70ch] text-[15px] text-dim">
+        Габариты — по корпусу панели, без стойки: стойка добавляет высоту, кронштейн — глубину. По
+        каждой диагонали есть отдельная страница с ценами, сценариями и способами установки.
+      </p>
+      <HumanScaleRow />
+
+      <nav aria-label="Страницы диагоналей" class="mt-bento grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+        {
+          DIAGONALS.map((diagonal) => (
+            <a
+              href={diagonalHref(diagonal.size)}
+              class="flex min-h-[44px] flex-col justify-center rounded-box border border-line bg-surface px-5 py-4 transition-[border-color,box-shadow] duration-200 hover:border-line-on-strong hover:shadow-glow-sm"
+            >
+              <span class="flex items-baseline justify-between gap-3">
+                <span class="text-[16.5px] font-semibold text-screen">
+                  Панель {diagonal.size}&nbsp;дюймов
+                </span>
+                <span class="font-mono text-[13px] text-focus" aria-hidden="true">
+                  →
+                </span>
+              </span>
+              <span class="mt-1 font-mono text-[12px] text-dim">
+                {diagonal.widthCm} × {diagonal.heightCm}&nbsp;см · от{' '}
+                {`${rub(diagonal.prices.d1)}/сутки`}
+              </span>
+            </a>
+          ))
+        }
+      </nav>
+    </section>
+
+    {/* Цены по дням: одна таблица на направление. */}
+    <section id="prices" class="mt-20">
+      <h2 class="section-title mb-6">Цены по дням</h2>
+      <PriceTable rows={priceRows} footnote={priceFootnote} />
+    </section>
+
+    <section id="other-diagonals" class="mt-20">
+      <div
+        class="grid gap-6 rounded-box border border-line-strong bg-surface p-6 sm:p-9 md:grid-cols-2 md:items-center"
+      >
+        <div>
+          <h2 class="section-title">Другие диагонали — по запросу</h2>
+          <p class="mt-3.5 max-w-[54ch] text-[16px] text-text">
+            Кроме основной линейки подбираем 32–50″ под навигацию и мониторы, 65″ — промежуточный
+            размер между 55″ и 75″, 100″ — для больших залов. Такие позиции идут под запрос: наличие
+            проверяем на вашу дату.
+          </p>
+        </div>
+        <div class="flex flex-col items-start gap-4 md:items-end">
+          <button
+            type="button"
+            data-quiz-open
+            data-preset={JSON.stringify({ services: ['consult'] })}
+            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            >Проверить наличие</button
+          >
+          <p class="font-mono text-[12.5px] text-dim md:text-right">
+            Ответим со сметой за 30&nbsp;минут в рабочее время
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="mounting" class="mt-20">
+      <h2 class="section-title mb-6">Способы установки</h2>
+      <MountMethods />
+    </section>
+
+    <section id="tech" class="mt-20">
+      <h2 class="section-title mb-6">Как подключается панель</h2>
+      <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-3">
+        {
+          tech.map((item) => (
+            <div class="rounded-box border border-line bg-surface p-6">
+              <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">{item.label}</p>
+              <p class="mt-3 max-w-[42ch] text-[15px] text-text">{item.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    <section id="about" class="mt-20">
+      <h2 class="section-title mb-6">Как выбрать диагональ и что влияет на смету</h2>
+      <div class="rounded-box border border-line bg-surface p-6 sm:p-9">
+        <div
+          data-seo-text
+          class="columns-1 gap-10 text-[15.5px] leading-[1.65] text-text lg:columns-2"
+        >
+          <p class="mt-0 mb-4">
+            Диагональ подбирают от расстояния до зрителя и от того, что на экране. Для ресепшна,
+            стенда и переговорной хватает 55″; зал на 30–60&nbsp;человек закрывают 75″ или 86″; для
+            сцены и аудитории около сотни человек берут 98″, а дальше честнее считать LED-экран.
+            Если на слайдах мелкие цифры, таблицы или интерфейс — берите диагональ на шаг крупнее:
+            читаемость с задних рядов важнее экономии.
+          </p>
+          <p class="mb-4">
+            Панель выигрывает у проектора там, где нельзя гасить свет: картинка не блёкнет,
+            затемнение и расчёт светового потока не нужны, а монтаж занимает минуты. С LED-экраном
+            граница проходит по площади и бюджету: пока картинка укладывается в одну панель, панель
+            дешевле, и её цена известна заранее. LED считают по квадратным метрам, и он выигрывает
+            там, где нужны площадь больше самой крупной панели, нестандартная геометрия или задник
+            сцены; в его смете появляются конструкция, видеопроцессор и время на сборку. Когда
+            задача пограничная, считаем оба варианта и показываем разницу до подписания.
+          </p>
+          <p class="mb-4">
+            Сколько панелей нужно — вопрос геометрии зала и стенда. Одна работает, пока зрители
+            сидят одним сектором и никто не смотрит на экран под острым углом; в широком зале, в
+            зале с колоннами и при рассадке буквой «П» вторую панель ставят на второй сектор. На
+            выставочном стенде комплект берут по другой причине: одна панель на фронт — для потока в
+            проходе, вторая — в переговорной зоне. Панели в комплекте подбираем так, чтобы зал не
+            видел разницы в яркости и цвете.
+          </p>
+          <p class="mb-4">
+            Монтажное окно задаёт площадка, а не подрядчик. В конгресс-центрах и на выставках
+            технику пускают до открытия или после закрытия, в бизнес-центре — вне рабочих часов,
+            поэтому ночной и ранний заезд для нас штатный режим. От окна зависят состав бригады и
+            запас времени на проверку: чем раньше зафиксированы дата, время и пропуска, тем спокойнее
+            проходит день мероприятия.
+          </p>
+          <p class="mb-0">
+            На смету влияют срок аренды, количество панелей, адрес площадки и время монтажа: выезд
+            за МКАД, ночные и выходные работы, нестандартный подвес и сложная коммутация идут
+            отдельными строками — вы видите их до подписания, а не в счёте постфактум. С технической
+            службой площадки работаем напрямую: согласуем путь заноса, питание и точки установки, по
+            запросу присылаем схему монтажа. С заказчиком — договор, счёт, акт и УПД, безналичный
+            расчёт и ЭДО; закрывающие отдаём в срок. Работаем в Москве и области.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="mt-20">
+      <h2 class="section-title mb-6">Вопросы по плазменным панелям</h2>
+      <FaqBlock items={FAQ_PLASMA} withJsonLd />
+    </section>
+
+    <section id="cta" class="mt-20">
+      <CtaBlock preset={plasmaPreset} />
+    </section>
+  </div>
+</Base>

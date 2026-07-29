@@ -1,0 +1,297 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import CtaBlock from '../../components/CtaBlock.astro';
+import FaqBlock from '../../components/FaqBlock.astro';
+import MountMethods from '../../components/MountMethods.astro';
+import PriceTable from '../../components/PriceTable.astro';
+import ScreenCard from '../../components/ScreenCard.astro';
+import ProductLd from '../../components/seo/ProductLd.astro';
+import { SITE } from '../../config/site';
+import { DIAGONALS, type Diagonal } from '../../data/diagonals';
+import { HOME_LINK, PLASMA_LINK, diagonalHref } from '../../data/nav';
+import Base from '../../layouts/Base.astro';
+import { rub } from '../../lib/format';
+
+export const getStaticPaths = (() =>
+  DIAGONALS.map((diagonal) => ({
+    params: { size: diagonal.size },
+    props: { d: diagonal },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+interface Copy {
+  /** Подзаголовок под H1: за что берут именно эту диагональ. */
+  lead: string;
+  /** Строка над схемами установки: чем монтаж этой диагонали отличается от соседних. */
+  mountNote: string;
+  /** Вторая половина мета-описания: первая собирается из диагонали и цены. */
+  descriptionTail: string;
+  /** Полезный текст после конверсионных блоков: 1000–1500 знаков, уникальный на страницу.
+   *  Габариты в прозе подставляются из данных диагонали, а не пишутся руками. */
+  text: (diagonal: Diagonal) => string[];
+}
+
+// Тексты страниц диагоналей — рабочий контент сайта, а не рыба: у каждой диагонали свои
+// площадки, своя логистика и свои «что учесть по месту». Ключевые фразы кластера (ТЗ §9)
+// употреблены по одному разу. Цены в тексты не вписываем — они приходят из SITE.
+const COPY: Record<Diagonal['size'], Copy> = {
+  '55': {
+    lead: 'Ходовая диагональ входной зоны: ресепшн, стойка регистрации, выставочный стенд и переговорная. Ставится на стойку, кронштейн или стол.',
+    mountNote:
+      'Для 55″ доступны все три варианта: по умолчанию привозим мобильную стойку, на ресепшн — настольное основание.',
+    descriptionTail:
+      'Ресепшн, выставочный стенд, переговорная. Доставка, монтаж и стойка в цене, смета за 30\u00A0минут.',
+    text: () => [
+      '55″ — рабочая диагональ входной зоны. Гость подходит к экрану на два-три метра, и этого расстояния хватает, чтобы прочитать схему этажа, расписание и список партнёров. Такую панель ставим на настольное основание или невысокую стойку: она не перекрывает работу хостес и не превращает стойку регистрации в подиум.',
+      'На выставочном стенде 55″ работает носителем ролика: видео идёт по кругу весь день, а мобильную стойку можно отодвинуть в угол, чтобы не резать площадь экспозиции. Формулировки в заявках разные — аренда телевизора 55\u00A0дюймов, плазма, ЖК-панель, — речь об одном и том же оборудовании. Кабель убираем в стойку, чтобы провода не попадали в кадр фотографу.',
+      'В переговорной и небольшом зале панель закрывает встречу на 10–15\u00A0человек: презентация, таблицы, видеовстреча вторым экраном. Аренда панели 55\u00A0дюймов на мероприятие обычно идёт комплектом — под стенд и зоны регистрации берут по несколько штук, поэтому на даты крупных выставок позиции лучше подтверждать заранее.',
+      'Что учесть по месту: розетка рядом с точкой установки, свободный проход для заноса и согласованное время монтажа. Прокат экрана 55″ в Москве закрываем в пределах МКАД — доставка, монтаж и демонтаж уже в цене позиции. Пришлите дату, адрес и что нужно вывести на экран: смета придёт в мессенджер за 30\u00A0минут в рабочее время, а бронь фиксируем сразу после согласования.',
+    ],
+  },
+  '75': {
+    lead: 'Рабочая диагональ конференц-зала: слайды и цифры читаются с последних рядов зала на 30–60\u00A0человек — без проектора и затемнения.',
+    mountNote:
+      'Для 75″ берут напольную стойку или кронштейн; на столе такая панель уже занимает всю рабочую поверхность.',
+    descriptionTail:
+      'Конференц-зал на 30–60\u00A0человек без проектора. Доставка, монтаж и стойка в цене, смета за 30\u00A0минут.',
+    text: () => [
+      '75″ — стандарт конференц-зала. На этой диагонали заканчивается спор с проектором: не нужны затемнение, расчёт светового потока и место под проекционный экран, а картинка держится при включённом рабочем свете. Для зала с окнами это часто единственный рабочий вариант — проекцию там приходится вытягивать яркостью и терять контраст.',
+      'На презентации продукта 75″ даёт крупный план: интерфейс, чертёж или само изделие видно в деталях. Запрос «аренда телевизора 75\u00A0дюймов» ведёт сюда же — это одна и та же позиция каталога. Аренда панели 75\u00A0дюймов на мероприятие проще проекции и по монтажу: панель ставят на мобильную стойку и включают, а не подвешивают и наводят.',
+      'На панельной дискуссии панель работает и на модератора, и на зал: тайминг, имена спикеров, вопросы из зала. Если панелей нужно две — одна на сцену, вторая в зал, — скажите сразу: подберём одинаковые, чтобы картинка и цветопередача совпадали.',
+      'Логистику проверяем заранее: 75″ едет в жёстком кофре, поэтому до выезда мы уточняем ширину дверей, грузовой лифт и этаж — на старых площадках это решающий момент. Прокат экрана 75″ в Москве идёт с доставкой в пределах МКАД и монтажом в окно площадки, в том числе ночью. В сезон конференций даты по этой диагонали разбирают первыми: пришлём смету за 30\u00A0минут в рабочее время и зарезервируем панель под вашу дату.',
+    ],
+  },
+  '86': {
+    lead: 'Между 75″ и 98″: сцена небольшого зала, стенд-доминанта на выставке, показ каталога и планировок в шоуруме.',
+    mountNote:
+      '86″ ставим на усиленную стойку; кронштейн — если площадка разрешает монтаж, а основание держит вес панели с креплением.',
+    descriptionTail:
+      'Сцена, стенд-доминанта, шоурум. Доставка, монтаж и усиленная стойка в цене, смета за 30\u00A0минут.',
+    text: (diagonal) => [
+      '86″ берут, когда 75″ уже мало, а LED-экран ещё избыточен. На сцене небольшого зала панель работает фоном для спикеров и заменяет проекцию: при рабочем свете проектор блёкнет, панель — нет, поэтому свет в зале ставят под людей и съёмку, а не под экран.',
+      `На выставке 86″ делает стенд заметным из соседнего прохода — это уже элемент застройки. Ширина корпуса ${diagonal.widthCm}\u00A0см, и место под панель закладывают в план стенда заранее: она забирает почти два метра фронта. В поиске эту диагональ часто набирают как аренда телевизора 86\u00A0дюймов — речь всё о той же панели.`,
+      'В шоуруме диагональ решает другую задачу: клиент видит узел оборудования, разрез или планировку в масштабе, близком к натуре, и вопрос «а можно приблизить?» отпадает сам собой. Аренда панели 86\u00A0дюймов на мероприятие часто идёт комплектом с источником и коммутацией — собираем его целиком, чтобы на площадке не искать переходники.',
+      'По месту важны три вещи: усиленная стойка, путь заноса и время монтажа. Панель везём в кофре и разворачиваем на месте, поэтому нужны свободный проход и место у стены; настенный монтаж согласуйте с площадкой заранее — вес с креплением требует надёжного основания. Прокат экрана 86″ в Москве чаще планируют с заездом накануне: так к открытию всё уже проверено. Пришлите дату, адрес и план площадки — вернём смету за 30\u00A0минут в рабочее время и согласуем монтажное окно.',
+    ],
+  },
+  '98': {
+    lead: 'Главный экран мероприятия: зал примерно до 100\u00A0человек, премиум-презентации и замена проектора там, где нельзя гасить свет.',
+    mountNote:
+      '98″ монтирует бригада: усиленная напольная стойка или кронштейн — по согласованию с технической службой площадки.',
+    descriptionTail:
+      'Главный экран зала до 100\u00A0человек. Доставка, монтаж бригадой и стойка в цене, смета за 30\u00A0минут.',
+    text: (diagonal) => [
+      'На 98″ переходят, когда экран перестаёт быть деталью зала и становится его центром. Смотрят на него с дальних рядов, поэтому кегль на слайдах и контраст важнее самой диагонали: мелкую таблицу не спасёт даже такой экран. При этом собирать конструкцию, считать нагрузку и согласовывать подвес не нужно — панель приезжает готовой.',
+      'Второй сценарий — встречи с высокой ценой ошибки: закрытый показ для инвестора, защита проекта, разговор с руководством компании. Здесь важна не столько диагональ, сколько отсутствие сюрпризов: панель, кабели и резервный источник проверяем до входа гостей, а техник остаётся на площадке всё мероприятие.',
+      '98″ ставят и там, где свет в зале выключать нельзя: переговорная с панорамными окнами, атриум, площадка с рабочим освещением. Аренда панели 98\u00A0дюймов на мероприятие в такой ситуации снимает вопрос без переделки светового сценария, а звучать он может и как аренда телевизора 98\u00A0дюймов — позиция одна.',
+      `Главное ограничение — габариты: ширина корпуса ${diagonal.widthCm}\u00A0см. Панель едет в жёстком кофре, до выезда уточняем габариты дверей, грузового лифта и путь заноса — иногда проще завезти через служебный вход, чем через парадный. Монтаж делает бригада; звук выводим на пульт площадки, встроенных динамиков такому залу не хватит. Прокат экрана 98″ в Москве планируем заранее: ответим сметой за 30\u00A0минут в рабочее время, дату и бригаду закрепим за проектом.`,
+    ],
+  },
+};
+
+const { d } = Astro.props;
+const copy = COPY[d.size];
+const others = DIAGONALS.filter((diagonal) => diagonal.size !== d.size);
+
+const title = `Аренда панели ${d.size} дюймов в Москве — от ${rub(d.prices.d1)} | ${SITE.brandName}`;
+const description = `Аренда панели ${d.size} дюймов в Москве — от ${rub(d.prices.d1)}/сутки. ${copy.descriptionTail}`;
+const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
+
+const priceFootnote =
+  'Цена за одну панель. Первый день — полная стоимость, каждый следующий дешевле; доставка в пределах МКАД, монтаж и стойка входят в цену. Выезд за МКАД и ночные работы считаем отдельно.';
+
+const boxClass = 'rounded-box border border-line bg-surface';
+---
+
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-4 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { name: HOME_LINK.label, url: HOME_LINK.href },
+        { name: PLASMA_LINK.label, url: PLASMA_LINK.href },
+        { name: `${d.size}″`, url: diagonalHref(d.size) },
+      ]}
+    />
+
+    <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
+      <div class={`card-slot flex min-w-0 flex-col ${boxClass} p-6 sm:p-8 md:col-span-7`}>
+        <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+          Плазменная панель · 16:9
+        </p>
+        <div class="my-8 flex justify-center">
+          <ScreenCard d={d} />
+        </div>
+        <p class="mt-auto max-w-[52ch] font-mono text-[11.5px] leading-[1.6] text-dim">
+          Габариты даны по корпусу панели, без стойки: стойка добавляет высоту, кронштейн —
+          глубину.
+        </p>
+      </div>
+
+      <div class="flex min-w-0 flex-col gap-bento md:col-span-5">
+        <div class={`flex flex-1 flex-col justify-center ${boxClass} p-6 sm:p-8`}>
+          <h1
+            class="font-display text-[clamp(26px,3vw,36px)] leading-[1.08] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Аренда панели {d.size}&nbsp;дюймов в Москве
+          </h1>
+          <p class="mt-4 text-[16px] leading-[1.5] text-text">{copy.lead}</p>
+          <p class="mt-5 font-mono text-[22px] text-screen">
+            от {rub(d.prices.d1)}<span class="text-[13px] text-dim"> / сутки</span>
+          </p>
+        </div>
+        <div class={`flex flex-wrap gap-3 ${boxClass} p-6`}>
+          <button
+            type="button"
+            data-quiz-open
+            data-preset={preset}
+            class="flex min-h-[48px] flex-1 items-center justify-center rounded-full bg-accent px-6 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            >Получить смету</button
+          >
+          <a
+            href={SITE.phoneHref}
+            data-goal="click_phone"
+            class="flex min-h-[48px] flex-1 items-center justify-center rounded-full border border-line-strong px-6 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            >Позвонить</a
+          >
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-20 grid gap-bento md:grid-cols-12">
+      <div id="prices" class="min-w-0 md:col-span-7">
+        <h2 class="section-title mb-6">Цена по дням</h2>
+        <PriceTable
+          rows={[
+            {
+              label: `Плазма ${d.size}″ (${d.widthCm}×${d.heightCm}\u00A0см)`,
+              d1: d.prices.d1,
+              d2: d.prices.d2,
+              d3: d.prices.d3,
+            },
+          ]}
+          footnote={priceFootnote}
+        />
+      </div>
+
+      <div id="included" class={`min-w-0 md:col-span-5 ${boxClass} p-6 sm:p-8`}>
+        <h2 class="text-[20px] font-semibold text-screen">Что включено</h2>
+        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+          {
+            SITE.included.map((item, index) => (
+              <li class="flex gap-3">
+                <span class="font-mono text-[13px] text-accent-soft">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="mt-5 border-t border-line pt-4 text-[13.5px] text-dim">
+          Отдельными строками сметы идут выезд за МКАД, ночные и выходные работы, нестандартный
+          монтаж и сложная коммутация.
+        </p>
+      </div>
+    </section>
+
+    <section id="mounting" class="mt-20">
+      <h2 class="section-title mb-3">Способы установки</h2>
+      <p class="mb-6 max-w-[70ch] text-[15px] text-dim">{copy.mountNote}</p>
+      <MountMethods />
+    </section>
+
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    <section id="about" class="mt-20">
+      <h2 class="section-title mb-6">Когда берут {d.size}&nbsp;дюймов</h2>
+      <div class={`${boxClass} p-6 sm:p-9`}>
+        <ul class="mb-7 grid gap-4 border-b border-line pb-7 sm:grid-cols-3">
+          {
+            d.scenarios.map((scenario, index) => (
+              <li class="flex gap-3 text-[15px] text-screen">
+                <span class="font-mono text-[13px] text-accent-soft">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span>{scenario}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <div
+          data-seo-text
+          class="columns-1 gap-10 text-[15.5px] leading-[1.65] text-text lg:columns-2"
+        >
+          {copy.text(d).map((paragraph) => <p class="mt-0 mb-4 last:mb-0">{paragraph}</p>)}
+        </div>
+      </div>
+    </section>
+
+    <section id="neighbours" class="mt-20">
+      <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
+        <h2 class="section-title">Другие диагонали</h2>
+        <a
+          href={PLASMA_LINK.href}
+          class="inline-flex min-h-[44px] items-center font-mono text-[12.5px] text-focus"
+          >все плазменные панели →</a
+        >
+      </div>
+      <div class="grid gap-bento sm:grid-cols-3">
+        {
+          others.map((other) => (
+            <a
+              href={diagonalHref(other.size)}
+              class={`flex flex-col ${boxClass} p-5 transition-[border-color,box-shadow] duration-200 hover:border-line-on-strong hover:shadow-glow-sm`}
+            >
+              <span class="screen-on flex aspect-[16/9] w-full items-center justify-center rounded-[10px]">
+                <span class="font-display text-[26px] font-semibold text-screen">{other.size}″</span>
+              </span>
+              <span class="mt-4 text-[16.5px] font-semibold text-screen">
+                Панель {other.size}&nbsp;дюймов
+              </span>
+              <span class="mt-1 font-mono text-[12px] text-dim">
+                {other.widthCm} × {other.heightCm}&nbsp;см
+              </span>
+              <span class="mt-3 font-mono text-[13.5px] text-screen">
+                {`от ${rub(other.prices.d1)}/сутки`}
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="faq" class="mt-20">
+      <h2 class="section-title mb-6">Вопросы по панели {d.size}&nbsp;дюймов</h2>
+      <FaqBlock items={d.faq} withJsonLd />
+    </section>
+
+    <section id="cta" class="mt-20">
+      <CtaBlock preset={preset} />
+    </section>
+
+    <ProductLd
+      name={`Аренда плазменной панели ${d.size} дюймов`}
+      price={d.prices.d1}
+      url={diagonalHref(d.size)}
+    />
+  </div>
+</Base>
+
+<style>
+  /* Карточка-экран в hero рисуется в честном масштабе, поэтому масштаб задаём под ширину
+     колонки: на мобиле 1 см = 1 px (98″ = 223 px и помещается в 375 px без прокрутки). */
+  .card-slot {
+    --px-per-cm: 1px;
+  }
+  @media (min-width: 640px) {
+    .card-slot {
+      --px-per-cm: 1.6px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .card-slot {
+      --px-per-cm: 1.9px;
+    }
+  }
+</style>

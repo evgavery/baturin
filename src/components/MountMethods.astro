@@ -1,0 +1,93 @@
+---
+// Три способа установки (ТЗ §5.2): схемы — линейная графика на currentColor в стиле
+// EquipmentIcon, без фото. У каждой схемы не больше шести фигур, смысл несёт текстовая подпись,
+// поэтому сама svg — aria-hidden.
+const methods = [
+  {
+    kind: 'stand' as const,
+    title: 'Напольная стойка',
+    note: 'Привозим по умолчанию: стойка не требует согласований с площадкой и переставляется за минуту. Рабочий вариант для стенда, зала и переговорной.',
+  },
+  {
+    kind: 'wall' as const,
+    title: 'Настенный кронштейн',
+    note: 'Когда площадка разрешает монтаж и есть подходящая стена или конструкция стенда. Не занимает места на полу, крепление согласуем заранее.',
+  },
+  {
+    kind: 'table' as const,
+    title: 'Настольная установка',
+    note: 'Для стойки регистрации и ресепшна: панель на настольном основании, кабели убираем в лоток. Вариант для диагоналей до 65″ — крупным панелям нужна стойка или кронштейн.',
+  },
+];
+---
+
+<div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-3">
+  {
+    methods.map((method) => (
+      <div data-mount={method.kind} class="rounded-box border border-line bg-surface p-6">
+        <svg
+          viewBox="0 0 200 140"
+          width="100%"
+          height="128"
+          aria-hidden="true"
+          class="text-focus"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.4"
+        >
+          {method.kind === 'stand' && (
+            <>
+              <rect
+                x="36"
+                y="12"
+                width="128"
+                height="72"
+                rx="4"
+                fill="currentColor"
+                fill-opacity="0.18"
+              />
+              <path d="M100 84 v34" />
+              <path d="M62 118 h76" />
+              <path d="M74 128 h52" />
+            </>
+          )}
+          {method.kind === 'wall' && (
+            <>
+              <path d="M22 8 v124" />
+              <rect
+                x="58"
+                y="28"
+                width="124"
+                height="70"
+                rx="4"
+                fill="currentColor"
+                fill-opacity="0.18"
+              />
+              <path d="M22 52 h36" />
+              <path d="M22 74 h36" />
+            </>
+          )}
+          {method.kind === 'table' && (
+            <>
+              <rect
+                x="54"
+                y="18"
+                width="104"
+                height="58"
+                rx="4"
+                fill="currentColor"
+                fill-opacity="0.18"
+              />
+              <path d="M106 76 v22" />
+              <path d="M84 98 h44" />
+              <path d="M22 100 h156" />
+              <path d="M40 100 v32 M160 100 v32" />
+            </>
+          )}
+        </svg>
+        <h3 class="mt-4 text-[18px] font-semibold text-screen">{method.title}</h3>
+        <p class="mt-2 max-w-[42ch] text-[14.5px] text-text">{method.note}</p>
+      </div>
+    ))
+  }
+</div>

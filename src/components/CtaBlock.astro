@@ -6,9 +6,11 @@ import ChannelRadios from './ChannelRadios.astro';
 interface Props {
   /** 'short' — короткая форма прямо в блоке (ТЗ §6.3); без пропса блок ведёт в квиз. */
   formType?: 'short';
+  /** JSON-пресет квиза для кнопки: страница подставляет свою позицию. */
+  preset?: string;
 }
 
-const { formType } = Astro.props;
+const { formType, preset } = Astro.props;
 
 const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
 const field =
@@ -138,6 +140,7 @@ const field =
         <button
           type="button"
           data-quiz-open
+          data-preset={preset}
           class="flex min-h-[48px] items-center justify-center rounded-full bg-screen px-8 text-[16px] font-semibold text-bg transition-colors duration-200 hover:bg-white"
         >
           Получить смету

@@ -2,12 +2,12 @@
 interface Props {
   rows: { label: string; d1: number; d2?: number; d3?: number }[];
   /** Сноска под таблицей: что входит в цену и что считается отдельно. */
-  caption: string;
+  footnote: string;
 }
 
 import { rub } from '../lib/format';
 
-const { rows, caption } = Astro.props;
+const { rows, footnote } = Astro.props;
 
 const head = 'border-y border-line px-5 py-3 font-normal text-[11px] tracking-[0.1em] uppercase';
 const cell = 'border-b border-line px-5 py-3.5';
@@ -15,11 +15,10 @@ const cell = 'border-b border-line px-5 py-3.5';
 
 <div class="rounded-box border border-line bg-surface">
   {/* Скролл-контейнер получает фокус с клавиатуры: иначе таблицу шире экрана нечем прокрутить. */}
-  <div class="overflow-x-auto" tabindex="0" role="region" aria-label={caption}>
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Цены аренды по дням, таблица с горизонтальной прокруткой">
     <table class="w-full min-w-[560px] border-collapse font-mono text-[14px]">
-      <caption class="caption-bottom px-5 py-4 text-left font-mono text-[11.5px] text-dim">
-        {caption}
-      </caption>
+      {/* Имя таблицы для скринридера; видимая сноска вынесена из прокрутки ниже. */}
+      <caption class="sr-only">Цены аренды по дням</caption>
       <thead class="text-dim">
         <tr>
           <th scope="col" class={`${head} text-left`}>Позиция</th>
@@ -44,4 +43,8 @@ const cell = 'border-b border-line px-5 py-3.5';
       </tbody>
     </table>
   </div>
+  {/* Сноска живёт вне прокрутки: внутри таблицы шириной 560px её текст обрезался бы на мобиле. */}
+  <p class="border-t border-line px-5 py-4 font-mono text-[11.5px] leading-[1.6] text-dim">
+    {footnote}
+  </p>
 </div>

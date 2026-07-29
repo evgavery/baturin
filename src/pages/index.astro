@@ -71,8 +71,6 @@ const directions = [
   },
 ];
 
-const h2 =
-  'font-display text-[clamp(24px,2.8vw,34px)] leading-[1.15] font-medium tracking-[-0.02em] text-screen';
 ---
 
 <Base title={title} description={description}>
@@ -141,7 +139,7 @@ const h2 =
     {/* 3. Четыре направления */}
     <section id="directions" class="mt-20">
       <div class="mb-6 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
-        <h2 class={h2}>Направления</h2>
+        <h2 class="section-title">Направления</h2>
         <span class="font-mono text-[12px] text-dim"
           >4 направления — один подрядчик на площадку</span
         >
@@ -165,7 +163,7 @@ const h2 =
     {/* 4. Ходовые позиции в честном масштабе */}
     <section id="diagonals" class="mt-20">
       <div class="mb-3 flex flex-wrap items-baseline justify-between gap-x-5 gap-y-2">
-        <h2 class={h2}>Диагонали в одном масштабе</h2>
+        <h2 class="section-title">Диагонали в одном масштабе</h2>
         <a
           href={PLASMA_LINK.href}
           class="inline-flex min-h-[44px] items-center font-mono text-[12.5px] text-focus"
@@ -214,7 +212,7 @@ const h2 =
 
     {/* 7. Как мы работаем */}
     <section id="process" class="mt-20">
-      <h2 class={`${h2} mb-6`}>Как мы работаем</h2>
+      <h2 class="section-title mb-6">Как мы работаем</h2>
       <StepsProcess />
     </section>
 
@@ -223,7 +221,7 @@ const h2 =
 
     {/* 9. Отзывы */}
     <section id="reviews" class="mt-20">
-      <h2 class={`${h2} mb-6`}>Отзывы</h2>
+      <h2 class="section-title mb-6">Отзывы</h2>
       <ReviewsBlock />
     </section>
 
@@ -234,7 +232,7 @@ const h2 =
       >
         <div>
           <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">Агентствам</p>
-          <h2 class={`${h2} mt-3.5 max-w-[26ch]`}>Работаем от вашего имени</h2>
+          <h2 class="section-title mt-3.5 max-w-[26ch]">Работаем от вашего имени</h2>
           <p class="mt-3.5 max-w-[52ch] text-[16px] text-text">
             White label: техника без наших логотипов, техник в чёрном, сметы в вашем формате.
             Персональный менеджер на связи в день монтажа.
@@ -255,7 +253,7 @@ const h2 =
 
     {/* 11. FAQ */}
     <section id="faq" class="mt-20">
-      <h2 class={`${h2} mb-6`}>Частые вопросы</h2>
+      <h2 class="section-title mb-6">Частые вопросы</h2>
       <FaqBlock items={FAQ_HOME} withJsonLd />
     </section>
 

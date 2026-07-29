@@ -1,0 +1,41 @@
+---
+import BreadcrumbsLd from './seo/BreadcrumbsLd.astro';
+
+interface Props {
+  /** Цепочка от «Главной» до текущей страницы; последний пункт — текущая, без ссылки. */
+  items: { name: string; url: string }[];
+}
+
+const { items } = Astro.props;
+
+// Видимая цепочка и разметка BreadcrumbList строятся из одного списка: разойтись они не могут.
+const lastIndex = items.length - 1;
+---
+
+<nav aria-label="Хлебные крошки">
+  <ol
+    class="flex flex-wrap items-center gap-x-2 font-mono text-[11.5px] tracking-[0.08em] text-dim uppercase"
+  >
+    {
+      items.map((item, index) => (
+        <li class="flex items-center gap-x-2">
+          {index > 0 && <span aria-hidden="true">/</span>}
+          {index === lastIndex ? (
+            <span aria-current="page" class="flex min-h-[44px] items-center">
+              {item.name}
+            </span>
+          ) : (
+            <a
+              href={item.url}
+              class="flex min-h-[44px] items-center transition-colors duration-200 hover:text-screen"
+            >
+              {item.name}
+            </a>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>
+
+<BreadcrumbsLd items={items} />
