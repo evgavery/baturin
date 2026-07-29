@@ -2,6 +2,7 @@
 // quiz-core (Task 10), этот модуль только: рендерит state в DOM, слушает ввод, читает/пишет
 // sessionStorage и шлёт запрос. Грузится лениво: app.ts делает dynamic import('./quiz') по
 // первому клику на [data-quiz-open], поэтому этот код не должен попасть в eager-бандл.
+import { loadUtm, stripInvisible } from './form-utils';
 import { reachGoal } from './goals';
 import {
   initialState,
@@ -11,11 +12,9 @@ import {
   type ClientType,
   type QuizState,
   type ServiceKey,
-  type Utm,
 } from './quiz-core';
 
 const STATE_KEY = 'quiz_state_v1';
-const UTM_KEY = 'utm_v1';
 
 const STEP_LABELS: Record<1 | 2 | 3, string> = {
   1: 'ШАГ 1 ИЗ 3 · ОБОРУДОВАНИЕ',
@@ -71,15 +70,6 @@ function removeStore(key: string): void {
   } catch {
     // ignore
   }
-}
-
-/**
- * Zero-width-символы (U+200B–U+200D, U+FEFF) — невидимы и матчятся JS-\s, но НЕ матчатся
- * серверным PCRE и не срезаются PHP trim() (см. комментарий isPhone в quiz-core.ts). Чистим на
- * вводе, а не в quiz-core: там регексы — посимвольное зеркало lead.php, трогать нельзя.
- */
-function stripInvisible(v: string): string {
-  return v.replace(/[\u200B-\u200D\uFEFF]/g, '');
 }
 
 function numOrNull(v: number): number | null {
@@ -147,27 +137,6 @@ function parsePreset(presetJson: string | undefined): Partial<QuizState> {
     return parsed && typeof parsed === 'object' ? sanitizePartialState(parsed as Record<string, unknown>) : {};
   } catch {
     return {};
-  }
-}
-
-/** utm_v1 пишет app.ts частичным объектом (только реально пришедшие utm_*); toPayload ждёт Utm|null. */
-function loadUtm(): Utm | null {
-  const raw = readStore(UTM_KEY);
-  if (!raw) return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
-    const p = parsed as Record<string, unknown>;
-    const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-    return {
-      source: str(p.source),
-      medium: str(p.medium),
-      campaign: str(p.campaign),
-      content: str(p.content),
-      term: str(p.term),
-    };
-  } catch {
-    return null;
   }
 }
 

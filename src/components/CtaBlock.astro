@@ -37,7 +37,7 @@ const field =
       /* Контракт Task 12 — тот же, что у #qualify-form: [data-errors] внутри формы,
          [data-success] соседним блоком в той же карточке. */
       <div class="mx-auto mt-8 max-w-[720px] rounded-box border border-line-strong bg-bg/80 p-5 text-left sm:p-7">
-        <form id="short-form" class="relative">
+        <form id="short-form" class="relative" novalidate>
           <div class="grid gap-bento sm:grid-cols-2">
             <div>
               <label class={label} for="short-name">
@@ -111,7 +111,36 @@ const field =
             class="absolute -left-[9999px] h-0 w-0 opacity-0"
           />
 
-          <p data-errors role="alert" hidden class="mt-4 text-[13.5px] text-err" />
+          {/* Живой регион ВСЕГДА в DOM (без hidden) — SR подписывается на регион, только если он
+             уже существовал к моменту изменения текста; появление региона одновременно с текстом
+             почти никогда не анонсируется (тот же приём, что в QuizModal.astro). Пусто = нет
+             ошибки, отступ гасим через :empty в <style> ниже. */}
+          <p data-errors aria-live="polite" class="mt-4 text-[13.5px] whitespace-pre-line text-err"></p>
+          {/* Прямые ссылки на мессенджеры при ошибке отправки — не в самом live-регионе (там
+             только текст), а соседним блоком: hidden на НЕ-live-элементе безопасен. */}
+          <p data-error-links hidden class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
+            <a
+              href={SITE.tgLink}
+              target="_blank"
+              rel="noopener"
+              data-goal="click_tg"
+              class="text-focus underline underline-offset-2">Telegram</a
+            >
+            <a
+              href={SITE.waLink}
+              target="_blank"
+              rel="noopener"
+              data-goal="click_wa"
+              class="text-focus underline underline-offset-2">WhatsApp</a
+            >
+            <a
+              href={SITE.maxLink}
+              target="_blank"
+              rel="noopener"
+              data-goal="click_max"
+              class="text-focus underline underline-offset-2">MAX</a
+            >
+          </p>
 
           <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
             <button
@@ -130,12 +159,18 @@ const field =
           </div>
         </form>
 
-        <div data-success hidden class="mt-6 rounded-sm border border-ok bg-ok/10 p-6">
+        {/* tabindex=-1: после успеха фокус переводим сюда программно (hidden→visible без явного
+           переноса фокуса скринридер не анонсирует, см. form-submit.ts). */}
+        <div data-success hidden tabindex="-1" class="mt-6 rounded-sm border border-ok bg-ok/10 p-6">
           <p class="text-[17px] font-semibold text-screen">Заявка у менеджера</p>
           <p class="mt-1.5 text-[15px] text-text">
             Смету пришлём в выбранный канал в течение 30&nbsp;минут в рабочее время.
           </p>
         </div>
+
+        <script>
+          import '../islands/short-form';
+        </script>
       </div>
     ) : (
       <div class="mt-8 flex flex-wrap justify-center gap-3">
@@ -158,3 +193,11 @@ const field =
     )
   }
 </div>
+
+<style>
+  /* [data-errors] всегда в DOM (без hidden — см. комментарий у разметки); пока пусто, гасим
+     собственный отступ, чтобы не оставалось пустой полосы над кнопками. Приём — как в QuizModal.astro. */
+  [data-errors]:empty {
+    margin: 0;
+  }
+</style>

@@ -1,15 +1,17 @@
 ---
 import { SITE } from '../config/site';
 import { AGENCY_LINK, POLICY_LINK } from '../data/nav';
+import type { ClientType, ServiceKey } from '../islands/quiz-core';
 import ChannelRadios from './ChannelRadios.astro';
 
-// Форма подбора под hero (ТЗ §6.2). Разметка готова целиком, обработчик подключается в Task 12:
-// до этого форма ничего не отправляет.
+// Форма подбора под hero (ТЗ §6.2). Обработчик — eager island qualify-form.ts (Task 12).
 const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
 const field =
   'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
 
-const INTERESTS = [
+// Типы value — из quiz-core (тот же ServiceKey/ClientType, что валидирует сервер и qualify-form.ts):
+// опечатка или устаревшее значение здесь ловится компилятором, а не тихо теряется в lead.php.
+const INTERESTS: { value: ServiceKey; label: string }[] = [
   { value: 'plasma', label: 'Плазменные панели' },
   { value: 'led', label: 'LED-экран' },
   { value: 'touch', label: 'Тач-панели' },
@@ -17,7 +19,7 @@ const INTERESTS = [
   { value: 'complex', label: 'Комплекс под задачу' },
 ];
 
-const CLIENT_TYPES = [
+const CLIENT_TYPES: { value: ClientType; label: string }[] = [
   { value: 'agency', label: 'Ивент-агентство' },
   { value: 'organizer', label: 'Организатор мероприятий' },
   { value: 'company', label: 'Компания (прямой заказчик)' },
@@ -35,7 +37,7 @@ const CLIENT_TYPES = [
     <span class="font-mono text-[12px] text-dim">ответим в течение 30&nbsp;минут</span>
   </div>
 
-  <form id="qualify-form" class="relative">
+  <form id="qualify-form" class="relative" novalidate>
     <div class="grid gap-bento sm:grid-cols-2">
       <div>
         <label class={label} for="qualify-interest">Что вас интересует</label>
@@ -119,7 +121,36 @@ const CLIENT_TYPES = [
       class="absolute -left-[9999px] h-0 w-0 opacity-0"
     />
 
-    <p data-errors role="alert" hidden class="mt-4 text-[13.5px] text-err"></p>
+    {/* Живой регион ВСЕГДА в DOM (без hidden) — SR подписывается на регион, только если он уже
+       существовал к моменту изменения текста; появление региона одновременно с текстом почти
+       никогда не анонсируется (тот же приём, что в QuizModal.astro). Пусто = нет ошибки, отступ
+       гасим через :empty в <style> ниже. */}
+    <p data-errors aria-live="polite" class="mt-4 text-[13.5px] whitespace-pre-line text-err"></p>
+    {/* Прямые ссылки на мессенджеры при ошибке отправки — не в самом live-регионе (там только
+       текст), а соседним блоком: hidden на НЕ-live-элементе безопасен. */}
+    <p data-error-links hidden class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
+      <a
+        href={SITE.tgLink}
+        target="_blank"
+        rel="noopener"
+        data-goal="click_tg"
+        class="text-focus underline underline-offset-2">Telegram</a
+      >
+      <a
+        href={SITE.waLink}
+        target="_blank"
+        rel="noopener"
+        data-goal="click_wa"
+        class="text-focus underline underline-offset-2">WhatsApp</a
+      >
+      <a
+        href={SITE.maxLink}
+        target="_blank"
+        rel="noopener"
+        data-goal="click_max"
+        class="text-focus underline underline-offset-2">MAX</a
+      >
+    </p>
 
     <div class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
       <button
@@ -132,8 +163,15 @@ const CLIENT_TYPES = [
   </form>
 
   {/* Контракт Task 12: [data-errors] внутри формы, [data-success] — соседним блоком в той же
-      карточке; обработчику остаётся спрятать форму и снять hidden с блока успеха. */}
-  <div data-success hidden class="mt-6 flex items-start gap-4 rounded-sm border border-ok bg-ok/10 p-6">
+      карточке; обработчику остаётся спрятать форму и снять hidden с блока успеха. tabindex=-1:
+      после успеха фокус переводим сюда программно (hidden→visible без явного переноса фокуса
+      скринридер не анонсирует, см. form-submit.ts). */}
+  <div
+    data-success
+    hidden
+    tabindex="-1"
+    class="mt-6 flex items-start gap-4 rounded-sm border border-ok bg-ok/10 p-6"
+  >
     <span
       class="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ok text-[17px] text-bg-deep"
       aria-hidden="true">✓</span
@@ -157,3 +195,15 @@ const CLIENT_TYPES = [
     >
   </p>
 </div>
+
+<script>
+  import '../islands/qualify-form';
+</script>
+
+<style>
+  /* [data-errors] всегда в DOM (без hidden — см. комментарий у разметки); пока пусто, гасим
+     собственный отступ, чтобы не оставалось пустой полосы над кнопками. Приём — как в QuizModal.astro. */
+  [data-errors]:empty {
+    margin: 0;
+  }
+</style>
