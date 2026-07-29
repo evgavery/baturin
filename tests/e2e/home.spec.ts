@@ -3,19 +3,7 @@ import { SITE } from '../../src/config/site';
 import { DIAGONALS } from '../../src/data/diagonals';
 import { FAQ_HOME } from '../../src/data/faq';
 import { DIRECTION_LINKS } from '../../src/data/nav';
-
-/** Цена так, как её печатает сайт: разряды и пробел перед ₽ — неразрывные (конвенция №4). */
-const rub = (value: number): string => `${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
-
-interface JsonLdNode {
-  '@type': string;
-  [key: string]: unknown;
-}
-
-async function readJsonLd(page: import('@playwright/test').Page): Promise<JsonLdNode[]> {
-  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
-  return blocks.map((block) => JSON.parse(block) as JsonLdNode);
-}
+import { readJsonLd, rub } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');

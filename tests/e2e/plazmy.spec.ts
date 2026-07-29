@@ -1,33 +1,12 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { SITE } from '../../src/config/site';
 import { DIAGONALS } from '../../src/data/diagonals';
 import { FAQ_PLASMA } from '../../src/data/faq';
-
-/** Цена так, как её печатает сайт: разряды и пробел перед ₽ — неразрывные (конвенция №4). */
-const rub = (value: number): string => `${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
-
-/** Сырые строки (title, meta, innerText) веб-ассерты не нормализуют — сравниваем без NBSP. */
-const plain = (value: string): string => value.replace(/\u00A0/g, ' ');
+import { plain, readJsonLd, requireNode, rub } from './helpers';
 
 const HUB = '/plazmy/';
 const pageUrl = (size: string): string => `/plazmy/${size}/`;
 const absolute = (path: string): string => new URL(path, SITE.url).href;
-
-interface JsonLdNode {
-  '@type': string;
-  [key: string]: unknown;
-}
-
-async function readJsonLd(page: Page): Promise<JsonLdNode[]> {
-  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
-  return blocks.map((block) => JSON.parse(block) as JsonLdNode);
-}
-
-function requireNode(nodes: JsonLdNode[], type: string): JsonLdNode {
-  const node = nodes.find((item) => item['@type'] === type);
-  if (!node) throw new Error(`На странице нет разметки ${type}`);
-  return node;
-}
 
 test.describe('хаб /plazmy/', () => {
   test.beforeEach(async ({ page }) => {

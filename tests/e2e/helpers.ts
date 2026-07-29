@@ -7,6 +7,30 @@ declare global {
   }
 }
 
+/** Цена так, как её печатает сайт: разряды и пробел перед ₽ — неразрывные (конвенция №4). */
+export const rub = (value: number): string => `${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
+
+/** Сырые строки (title, meta, innerText) веб-ассерты не нормализуют — сравниваем без NBSP. */
+export const plain = (value: string): string => value.replace(/\u00A0/g, ' ');
+
+export interface JsonLdNode {
+  '@type': string;
+  [key: string]: unknown;
+}
+
+/** Читает все блоки `application/ld+json` со страницы как разобранные объекты. */
+export async function readJsonLd(page: Page): Promise<JsonLdNode[]> {
+  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
+  return blocks.map((block) => JSON.parse(block) as JsonLdNode);
+}
+
+/** Находит узел JSON-LD по `@type`; бросает читаемую ошибку, если разметки нет. */
+export function requireNode(nodes: JsonLdNode[], type: string): JsonLdNode {
+  const node = nodes.find((item) => item['@type'] === type);
+  if (!node) throw new Error(`На странице нет разметки ${type}`);
+  return node;
+}
+
 /**
  * Подписывается на событие `goal` до загрузки страницы и возвращает читалку списка целей.
  * Вызывать ДО `page.goto`.

@@ -8,9 +8,11 @@ interface Props {
   formType?: 'short';
   /** JSON-пресет квиза для кнопки: страница подставляет свою позицию. */
   preset?: string;
+  /** Текст кнопки квиза: у большинства страниц «Получить смету», у агентств — своя формулировка (ТЗ §5.6). */
+  ctaLabel?: string;
 }
 
-const { formType, preset } = Astro.props;
+const { formType, preset, ctaLabel = 'Получить смету' } = Astro.props;
 
 const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
 const field =
@@ -143,7 +145,7 @@ const field =
           data-preset={preset}
           class="flex min-h-[48px] items-center justify-center rounded-full bg-screen px-8 text-[16px] font-semibold text-bg transition-colors duration-200 hover:bg-white"
         >
-          Получить смету
+          {ctaLabel}
         </button>
         <a
           href={SITE.phoneHref}

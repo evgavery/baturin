@@ -1,13 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { SITE } from '../../src/config/site';
 import { FAQ_LED } from '../../src/data/faq';
-import { collectGoals } from './helpers';
-
-/** Цена так, как её печатает сайт: разряды и пробел перед ₽ — неразрывные (конвенция №4). */
-const rub = (value: number): string => `${new Intl.NumberFormat('ru-RU').format(value)} ₽`;
-
-/** Сырые строки (title, meta) веб-ассерты не нормализуют — сравниваем без NBSP. */
-const plain = (value: string): string => value.replace(/\u00A0/g, ' ');
+import { collectGoals, plain, readJsonLd, rub } from './helpers';
 
 const PAGE = '/led-ekrany/';
 
@@ -15,16 +9,6 @@ const PAGE = '/led-ekrany/';
 // 4×2,5 = 35 000 ₽, 3×2,5 = 26 500 ₽, 1×2,5 = 9 000 ₽, 20×2,5 = 175 000 ₽,
 // типовые конфигурации — 21 000 / 35 000 / 63 000 ₽. Сменится ставка — числа пересматриваем.
 const M2 = SITE.prices.ledM2;
-
-interface JsonLdNode {
-  '@type': string;
-  [key: string]: unknown;
-}
-
-async function readJsonLd(page: Page): Promise<JsonLdNode[]> {
-  const blocks = await page.locator('script[type="application/ld+json"]').allTextContents();
-  return blocks.map((block) => JSON.parse(block) as JsonLdNode);
-}
 
 test.describe('/led-ekrany/', () => {
   test.beforeEach(async ({ page }) => {
