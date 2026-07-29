@@ -1,0 +1,449 @@
+---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CtaBlock from '../components/CtaBlock.astro';
+import FaqBlock from '../components/FaqBlock.astro';
+import FlagshipBlock from '../components/FlagshipBlock.astro';
+import { SITE } from '../config/site';
+import { FAQ_LED } from '../data/faq';
+import { HOME_LINK, LED_LINK, PLASMA_LINK } from '../data/nav';
+import { area, priceFrom, recommendPitch } from '../islands/calc-core';
+import Base from '../layouts/Base.astro';
+import { num, rub } from '../lib/format';
+
+// Страница направления по ТЗ §5.3. Цены типовых конфигураций считает тот же calc-core,
+// что и калькулятор в браузере: разойтись витрина и остров не могут.
+const M2 = SITE.prices.ledM2;
+
+// Полный title — 56 знаков (потолок ТЗ §9 — 60): «с монтажом» из шаблона убрано, иначе
+// с суффиксом бренда строка вырастает до 67 знаков. Монтаж остаётся в description.
+const title = `Аренда LED-экранов в Москве — от ${rub(M2)}/м² | ${SITE.brandName}`;
+const description = `Светодиодные экраны indoor и outdoor в аренду: собираем экран любого размера из кабинетов. От ${rub(M2)}/м² в сутки с монтажом. Смета за 30\u00A0минут в мессенджер.`;
+
+const ledPreset = JSON.stringify({ services: ['led'] });
+
+const facts = [
+  {
+    label: 'В парке',
+    value: `${SITE.park.ledTotalM2}\u00A0м²`,
+    note: 'кабинетов indoor и outdoor — хватает на несколько экранов в одну смену',
+  },
+  {
+    label: 'Цена',
+    value: `от ${rub(M2)}`,
+    note: 'за м² в сутки — с конструкцией, монтажом и техником на площадке',
+  },
+];
+
+const formats = [
+  {
+    title: 'Кабинеты вместо диагонали',
+    text: 'Экран набирают из одинаковых кабинетов, поэтому его размер кратен модулю, а не выбирается из готовой линейки. Отсюда любые пропорции: узкий баннер над сценой, квадрат на стенде, полотно во всю ширину зала.',
+  },
+  {
+    title: 'Считается по площади',
+    text: `Смета LED считается в м²: от ${rub(M2)} за м² в сутки. Первый вопрос не про дюймы, а про прямоугольник — какой размер нужен в зале и с какого расстояния на него смотрят.`,
+  },
+  {
+    title: 'Indoor и outdoor',
+    text: 'Indoor-кабинеты рассчитаны на зал с ровным светом. Для улицы и площадок с прямым солнцем берут outdoor: влагозащита и запас по яркости в тысячи нит, а конструкция считается под ветровую нагрузку.',
+  },
+  {
+    title: 'Шаг пикселя',
+    text: 'Шаг пикселя — расстояние между центрами соседних светодиодов в миллиметрах, и чем ближе зритель, тем меньше шаг пикселя. Ориентир: P2.5 — стенд и переговорная, P3 — конференц-зал, P4 и крупнее — дальние дистанции и улица.',
+  },
+];
+
+// Значения по умолчанию — в одном месте: из них рендерятся и поля, и стартовый вывод,
+// и пресет квиза, поэтому серверная разметка не может разойтись с расчётом острова.
+const defaults = { w: 4, h: 2.5, dist: 5 };
+
+// Поля калькулятора: границы задаются здесь и здесь же читаются островом — значение вне
+// диапазона он приводит к min/max, поэтому в выводе не может появиться NaN.
+const fields: {
+  name: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  mode: 'decimal' | 'numeric';
+  hint: string;
+}[] = [
+  {
+    name: 'w',
+    label: 'Ширина, м',
+    min: 1,
+    max: 20,
+    step: 0.5,
+    value: defaults.w,
+    mode: 'decimal',
+    hint: 'от 1 до 20\u00A0м',
+  },
+  {
+    name: 'h',
+    label: 'Высота, м',
+    min: 1,
+    max: 10,
+    step: 0.5,
+    value: defaults.h,
+    mode: 'decimal',
+    hint: 'от 1 до 10\u00A0м',
+  },
+  {
+    name: 'dist',
+    label: 'Зритель, м',
+    min: 2,
+    max: 30,
+    step: 1,
+    value: defaults.dist,
+    mode: 'numeric',
+    hint: 'до первого ряда',
+  },
+];
+
+const calcPreset = JSON.stringify({
+  services: ['led'],
+  ledW: defaults.w,
+  ledH: defaults.h,
+});
+
+// Типовые конфигурации ТЗ §5.3. Размеры — данные, цены и площади считаются из них.
+const configs = [
+  {
+    w: 3,
+    h: 2,
+    title: 'Экран на стенд',
+    note: 'Выставочный стенд, фойе, зона регистрации: ролик и навигация для потока в проходе.',
+  },
+  {
+    w: 4,
+    h: 2.5,
+    title: 'Экран в зал',
+    note: 'Конференция и презентация: слайды, цифры и видео читаются с последних рядов.',
+  },
+  {
+    w: 6,
+    h: 3,
+    title: 'Задник сцены',
+    note: 'Форум, награждение, шоу-программа: фон для спикеров и полноэкранная графика.',
+  },
+];
+
+// Состав аренды для LED отличается от панелей (SITE.included): вместо стойки — конструкция,
+// видеопроцессор и работа с контентом. Список — из ТЗ §5.3, цен в нём нет.
+const included = [
+  'Конструкция: ферма, подвес или наземная сборка с балластом',
+  'Видеопроцессор и коммутация: масштабирование, резерв сигнала, вывод с ноутбука или плеера',
+  'Контент-менеджмент: принимаем макеты, готовим под пиксельный размер экрана, проверяем воспроизведение',
+  'Техник на площадке: сборка, настройка и дежурство всё мероприятие',
+];
+
+const boxClass = 'rounded-box border border-line bg-surface';
+const fieldLabel = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
+const fieldInput =
+  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 font-mono text-[16px] text-screen focus:border-accent';
+const primaryButton =
+  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
+---
+
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-4 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { name: HOME_LINK.label, url: HOME_LINK.href },
+        { name: LED_LINK.label, url: LED_LINK.href },
+      ]}
+    />
+
+    {/* Интро направления: из чего собирается экран и что уже входит в цену. */}
+    <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
+      <div
+        class={`flex min-w-0 flex-col justify-between gap-8 ${boxClass} p-6 sm:p-9 md:col-span-8`}
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+            Москва и МО · светодиодные экраны indoor и outdoor
+          </p>
+          <h1
+            class="mt-5 max-w-[20ch] font-display text-[clamp(28px,3.8vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Аренда светодиодных экранов
+          </h1>
+          <p class="mt-4 max-w-[62ch] text-[17px] leading-[1.5] text-text">
+            Экран собирается из кабинетов под нужный размер: баннер на стенде, полотно в зале,
+            задник сцены или портал. Цена считается по площади — от {rub(M2)} за м² в сутки;
+            в неё входят конструкция, монтаж, видеопроцессор и техник на площадке. Смету
+            присылаем в мессенджер за 30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-3">
+          <button type="button" data-quiz-open data-preset={ledPreset} class={primaryButton}
+            >Получить смету</button
+          >
+          <a
+            href={SITE.phoneHref}
+            data-goal="click_phone"
+            class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            >Позвонить</a
+          >
+          <a href="#calc" class="flex min-h-[48px] items-center font-mono text-[13px] text-focus"
+            >посчитать площадь и цену →</a
+          >
+        </div>
+      </div>
+
+      <div class="grid min-w-0 gap-bento md:col-span-4">
+        {
+          facts.map((fact) => (
+            <div class={`${boxClass} p-6`}>
+              <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">{fact.label}</p>
+              <p class="mt-3 font-display text-[30px] leading-none font-semibold text-screen">
+                {fact.value}
+              </p>
+              <p class="mt-2.5 text-[14.5px] text-text">{fact.note}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Объяснение форматов (ТЗ §5.3): кабинеты, площадь, indoor/outdoor, шаг пикселя. */}
+    <section id="formats" class="mt-20">
+      <h2 class="section-title mb-6">Как устроен LED-экран</h2>
+      <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+        {
+          formats.map((format) => (
+            <div class={`${boxClass} p-6`}>
+              <h3 class="text-[17px] font-semibold text-screen">{format.title}</h3>
+              <p class="mt-3 text-[14.5px] leading-[1.55] text-text">{format.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section id="calc" class="mt-20">
+      <h2 class="section-title mb-3">Калькулятор площади и цены</h2>
+      <p class="mb-6 max-w-[70ch] text-[15px] text-dim">
+        Задайте размер экрана и расстояние до первого ряда — посчитаем площадь, подскажем шаг
+        пикселя и покажем ориентир по цене за сутки.
+      </p>
+
+      <div id="led-calc" class="grid gap-bento md:grid-cols-12">
+        <div class={`flex min-w-0 flex-col justify-between ${boxClass} p-6 sm:p-8 md:col-span-7`}>
+          {/* Поля стоят в один ряд на всех вьюпортах: на мобиле иначе результат уезжает
+              под плавающий док мессенджеров. */}
+          <div class="grid grid-cols-3 gap-3 sm:gap-5">
+            {
+              fields.map((field) => (
+                <div>
+                  <label class={fieldLabel} for={`calc-${field.name}`}>
+                    {field.label}
+                  </label>
+                  <input
+                    id={`calc-${field.name}`}
+                    name={field.name}
+                    type="number"
+                    inputmode={field.mode}
+                    min={field.min}
+                    max={field.max}
+                    step={field.step}
+                    value={field.value}
+                    aria-describedby={`calc-${field.name}-hint`}
+                    class={fieldInput}
+                  />
+                  <p id={`calc-${field.name}-hint`} class="mt-2 font-mono text-[11.5px] text-dim">
+                    {field.hint}
+                  </p>
+                </div>
+              ))
+            }
+          </div>
+          <p class="mt-6 max-w-[70ch] border-t border-line pt-4 text-[13.5px] leading-[1.6] text-dim">
+            Размер кратен кабинету: ближайший рабочий размер подберём под вашу площадку.
+          </p>
+        </div>
+
+        <div
+          class="screen-on flex min-w-0 flex-col justify-between gap-7 rounded-box p-6 sm:p-8 md:col-span-5"
+        >
+          <dl class="grid gap-3.5" aria-live="polite">
+            <div class="flex items-baseline justify-between gap-4 border-b border-white/15 pb-3.5">
+              <dt class="font-mono text-[11px] tracking-[0.12em] text-screen/70 uppercase">
+                Площадь
+              </dt>
+              <dd data-out="area" class="font-mono text-[19px] text-white tabular-nums">
+                {num(area(defaults.w, defaults.h))}&nbsp;м²
+              </dd>
+            </div>
+            <div class="flex items-baseline justify-between gap-4 border-b border-white/15 pb-3.5">
+              <dt class="font-mono text-[11px] tracking-[0.12em] text-screen/70 uppercase">
+                Шаг пикселя
+              </dt>
+              <dd data-out="pitch" class="font-mono text-[19px] text-white">
+                {recommendPitch(defaults.dist)}
+              </dd>
+            </div>
+            <div class="flex items-baseline justify-between gap-4">
+              <dt class="font-mono text-[11px] tracking-[0.12em] text-screen/70 uppercase">
+                Цена «от»
+              </dt>
+              {/* «/ сутки» на мобиле — отдельной строкой: на 375 px шестизначная сумма
+                  («от 700 000 ₽») иначе переносит хвост и блок вывода подрастает на 24 px,
+                  сдвигая кнопку. Своя строка держит высоту постоянной при любой сумме. */}
+              <dd class="text-right font-mono text-white">
+                <span data-out="price" class="text-[22px] tabular-nums"
+                  >от {rub(priceFrom(defaults.w, defaults.h, M2))}</span
+                ><span class="block text-[13px] text-screen/70 sm:inline"> / сутки</span>
+              </dd>
+            </div>
+          </dl>
+
+          <div>
+            <button
+              type="button"
+              data-quiz-open
+              data-preset={calcPreset}
+              class="flex min-h-[48px] w-full items-center justify-center rounded-full bg-screen px-7 text-[15px] font-semibold text-bg transition-colors duration-200 hover:bg-white"
+              >Получить точную смету</button
+            >
+            <p class="mt-3.5 text-[13.5px] leading-[1.5] text-screen/80">
+              Точную смету пришлём в мессенджер за 30&nbsp;минут в рабочее время: на неё влияют
+              площадка, конструкция и время монтажа.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Типовые конфигурации: цены посчитаны из ставки за м², а не вписаны руками. */}
+    <section id="configs" class="mt-20">
+      <h2 class="section-title mb-6">Типовые конфигурации</h2>
+      <div class="grid gap-bento md:grid-cols-3">
+        {
+          configs.map((config) => (
+            <div data-config class={`flex flex-col ${boxClass} p-6`}>
+              <p class="font-mono text-[12.5px] text-dim">
+                {num(config.w)} × {num(config.h)}&nbsp;м · {num(area(config.w, config.h))}&nbsp;м²
+              </p>
+              <h3 class="mt-3 text-[19px] font-semibold text-screen">{config.title}</h3>
+              <p class="mt-2 mb-6 max-w-[42ch] text-[14.5px] text-text">{config.note}</p>
+              <p class="mt-auto font-mono text-[19px] text-screen">
+                от {rub(priceFrom(config.w, config.h, M2))}
+                <span class="text-[12.5px] text-dim"> / сутки</span>
+              </p>
+              <button
+                type="button"
+                data-quiz-open
+                data-preset={JSON.stringify({
+                  services: ['led'],
+                  ledW: config.w,
+                  ledH: config.h,
+                })}
+                class="mt-5 flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+              >
+                Запросить смету
+              </button>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Флагман — блок-повтор с главной (ТЗ §5.3) — и состав аренды LED. */}
+    <section class="mt-20 grid gap-bento md:grid-cols-12">
+      <div class="min-w-0 md:col-span-7">
+        <FlagshipBlock />
+      </div>
+      <div id="included" class={`min-w-0 ${boxClass} p-6 sm:p-8 md:col-span-5`}>
+        <h2 class="text-[20px] font-semibold text-screen">Что входит в аренду экрана</h2>
+        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+          {
+            included.map((item, index) => (
+              <li class="flex gap-3">
+                <span class="font-mono text-[13px] text-accent-soft">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="mt-5 border-t border-line pt-4 text-[13.5px] leading-[1.6] text-dim">
+          Отдельными строками сметы идут выезд за МКАД, ночные и выходные работы, высотные работы
+          и согласование подвеса, длинные трассы сигнала и питания.
+        </p>
+      </div>
+    </section>
+
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    <section id="about" class="mt-20">
+      <h2 class="section-title mb-6">Когда берут LED-экран и что влияет на цену</h2>
+      <div class={`${boxClass} p-6 sm:p-9`}>
+        <div
+          data-seo-text
+          class="columns-1 gap-10 text-[15.5px] leading-[1.65] text-text lg:columns-2"
+        >
+          <p class="mt-0 mb-4">
+            Панель и светодиодный экран решают разные задачи. Панель — готовое изделие с
+            фиксированной диагональю: привезли, поставили на стойку, включили. LED — конструктор:
+            нужный прямоугольник набирается из кабинетов, поэтому аренда светодиодного экрана
+            начинается там, где заканчивается линейка панелей: площадь больше трёх квадратных
+            метров, нестандартные пропорции, полотно во всю ширину сцены. Пока задача
+            закрывается готовым изделием из линейки, дешевле и быстрее в монтаже <a
+              href={PLASMA_LINK.href}
+              class="text-focus underline underline-offset-2">плазменные панели 55–98″</a
+            >.
+          </p>
+          <p class="mb-4">
+            В зале LED берут как задник сцены, портал вокруг неё или медиастену в фойе: полотно
+            получается сплошным, без рамок между экранами, и не блёкнет при рабочем свете. На улице
+            задача другая: уличный светодиодный экран должен пробивать дневной свет и переносить
+            осадки, поэтому нужны outdoor-кабинеты с влагозащитой и запасом по яркости, а
+            конструкция считается под ветровую нагрузку. При штормовом предупреждении экран
+            опускают — этот регламент проговариваем заранее, а не в день монтажа.
+          </p>
+          <p class="mb-4">
+            Цена аренды LED-экрана складывается из площади и того, что вокруг неё. Площадь — база:
+            считаем по квадратным метрам, поэтому ширина и высота важнее любой диагонали. Дальше
+            идут шаг пикселя — чем он мельче, тем дороже кабинет, — тип конструкции: наземная
+            сборка с балластом обходится дешевле подвеса на фермах. На смету влияют также высота и
+            время монтажа, длина трасс сигнала и питания, срок аренды и адрес площадки; ночные и
+            выходные работы, выезд за МКАД и высотные работы идут отдельными строками, которые вы
+            видите до подписания.
+          </p>
+          <p class="mb-4">
+            Половину сметы задаёт площадка. До выезда мы уточняем, есть ли выделенная линия питания
+            с запасом по мощности, куда пускают технику и сколько времени дают на сборку: крупная
+            конструкция монтируется часами, а не минутами. Для подвеса нужны согласованные точки и
+            допуск на высотные работы, для наземного варианта — место под ферму и балласт. Схему
+            монтажа, вес и нагрузку готовим заранее: техническая служба площадки почти всегда
+            запрашивает их до заезда.
+          </p>
+          <p class="mb-0">
+            Контент готовим под пиксельный размер экрана: макет, свёрстанный под 16:9, на
+            нестандартной пропорции обрежется, поэтому размеры полезно зафиксировать до отрисовки
+            графики. Готовые ролики и презентации принимаем заранее, проверяем воспроизведение на
+            площадке и оставляем техника на смене. Аренда LED-экрана на мероприятие в Москве и
+            области идёт с договором, счётом и закрывающими: безналичный расчёт, при необходимости
+            ЭДО. Пришлите дату, адрес, желаемый размер экрана и расстояние до зрителей — вернёмся со
+            сметой за 30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="mt-20">
+      <h2 class="section-title mb-6">Вопросы по LED-экранам</h2>
+      <FaqBlock items={FAQ_LED} withJsonLd />
+    </section>
+
+    <section id="cta" class="mt-20">
+      <CtaBlock preset={ledPreset} />
+    </section>
+  </div>
+</Base>
+
+<script>
+  import '../islands/led-calc';
+</script>
