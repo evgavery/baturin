@@ -1,0 +1,264 @@
+---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CtaBlock from '../components/CtaBlock.astro';
+import FaqBlock from '../components/FaqBlock.astro';
+import ProductLd from '../components/seo/ProductLd.astro';
+import { SITE } from '../config/site';
+import { FAQ_TOUCH } from '../data/faq';
+import { HOME_LINK, TOUCH_LINK } from '../data/nav';
+import Base from '../layouts/Base.astro';
+import { rub } from '../lib/format';
+
+// Страница направления по ТЗ §5.4. Тач-панели — «железо», как плазмы и LED: три позиции
+// с ценами, карточки + Product-разметка на каждую. Цена в title — от SITE.prices.touch
+// (совпадает с самой дешёвой позицией touchTable, 55″ на стойке).
+const title = `Аренда сенсорных панелей в Москве — от ${rub(SITE.prices.touch)} | ${SITE.brandName}`;
+const description = `Сенсорные панели и интерактивные киоски в аренду: стенды, регистрация гостей, презентации. От ${rub(SITE.prices.touch)}/сутки. Смета за 30 минут в мессенджер.`;
+
+const touchPreset = JSON.stringify({ services: ['touch'] });
+
+const facts = [
+  {
+    label: 'Позиций',
+    value: `${SITE.prices.touchTable.length}`,
+    note: 'панели на стойке и интерактивный киоск — под любой сценарий',
+  },
+  {
+    label: 'Смета',
+    value: '30 мин',
+    note: 'в Telegram, WhatsApp или MAX — в рабочее время',
+  },
+];
+
+// Сценарии — ровно формулировки ТЗ §5.4, каждая раскрыта одним прикладным примером.
+const scenarios = [
+  {
+    title: 'Выставочный стенд',
+    text: 'Каталог продукции или конфигуратор — гость выбирает раздел сам, а не ждёт свободного стендиста. Панель работает у входа на стенд весь день без сотрудника рядом.',
+  },
+  {
+    title: 'Регистрация гостей',
+    text: 'Экран заменяет стойку с бумажными списками: гость находит себя по фамилии или QR-коду и получает бейдж. При интеграции с вашей CRM данные участников уходят в базу сразу.',
+  },
+  {
+    title: 'Интерактивные презентации',
+    text: 'Слайды, конфигуратор комплектации или каталог с фото и видео листаются касанием — без пульта и ноутбука в руках у докладчика.',
+  },
+  {
+    title: 'Навигация по площадке',
+    text: 'Схема этажей, программа дня и список участников — в киоске на входе или в холле. Гость находит нужный зал сам, поток у стойки информации становится меньше.',
+  },
+];
+
+// Позиции — из SITE.prices.touchTable; заметки по каждой считаны по индексу, а не по строке
+// названия, чтобы не завязываться на точный текст label.
+const POSITION_NOTES = [
+  'Компактный экран для входной группы: стойка регистрации, ресепшн, точка опроса на стенде.',
+  'Крупнее и заметнее в потоке: каталог на стенде, навигация в фойе, презентация для нескольких человек у экрана.',
+  'Отдельно стоящий корпус с экраном в сборе: привезли, включили — отдельная стойка и монтаж каркаса не нужны.',
+];
+const positions = SITE.prices.touchTable.map((row, index) => ({
+  ...row,
+  note: POSITION_NOTES[index],
+}));
+
+const boxClass = 'rounded-box border border-line bg-surface';
+const primaryButton =
+  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
+const secondaryButton =
+  'flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
+const cardButton =
+  'mt-5 flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
+---
+
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-4 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { name: HOME_LINK.label, url: HOME_LINK.href },
+        { name: TOUCH_LINK.label, url: TOUCH_LINK.href },
+      ]}
+    />
+
+    {/* Интро направления: чем тач отличается от обычной панели и что уже входит в цену. */}
+    <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
+      <div
+        class={`flex min-w-0 flex-col justify-between gap-8 ${boxClass} p-6 sm:p-9 md:col-span-8`}
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+            Москва и МО · сенсорные панели и интерактивные киоски
+          </p>
+          <h1
+            class="mt-5 max-w-[20ch] font-display text-[clamp(28px,3.8vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Аренда сенсорных панелей и интерактивных киосков
+          </h1>
+          <p class="mt-4 max-w-[62ch] text-[17px] leading-[1.5] text-text">
+            Сенсорная панель превращает стойку регистрации, стенд или зону навигации в инструмент,
+            с которым гость работает сам — выбирает раздел, проходит регистрацию или изучает
+            каталог без сотрудника рядом. Три позиции: тач-панели 55″ и 65″ на стойке и отдельно
+            стоящий интерактивный киоск. Цена — от {rub(SITE.prices.touch)}/сутки, в неё входят
+            доставка, монтаж и настройка вашего контента. Смету присылаем в мессенджер за
+            30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" data-quiz-open data-preset={touchPreset} class={primaryButton}
+            >Получить смету</button
+          >
+          <a href={SITE.phoneHref} data-goal="click_phone" class={secondaryButton}>Позвонить</a>
+        </div>
+      </div>
+
+      <div class="grid min-w-0 gap-bento md:col-span-4">
+        {
+          facts.map((fact) => (
+            <div class={`${boxClass} p-6`}>
+              <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">
+                {fact.label}
+              </p>
+              <p class="mt-3 font-display text-[30px] leading-none font-semibold text-screen">
+                {fact.value}
+              </p>
+              <p class="mt-2.5 text-[14.5px] text-text">{fact.note}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Сценарии по ТЗ §5.4: стенды, регистрация, презентации, навигация. */}
+    <section id="scenarios" class="mt-20">
+      <h2 class="section-title mb-6">Где работает сенсорный экран</h2>
+      <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+        {
+          scenarios.map((scenario) => (
+            <div class={`${boxClass} p-6`}>
+              <h3 class="text-[17px] font-semibold text-screen">{scenario.title}</h3>
+              <p class="mt-3 text-[14.5px] leading-[1.55] text-text">{scenario.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Позиции и цены: три карточки из SITE.prices.touchTable + Product-разметка на каждую. */}
+    <section id="positions" class="mt-20">
+      <h2 class="section-title mb-6">Позиции и цены</h2>
+      <div class="grid gap-bento md:grid-cols-3">
+        {
+          positions.map((position) => (
+            <div data-position class={`flex flex-col ${boxClass} p-6`}>
+              <h3 class="text-[19px] font-semibold text-screen">{position.label}</h3>
+              <p class="mt-2 mb-6 max-w-[42ch] text-[14.5px] text-text">{position.note}</p>
+              <p class="mt-auto font-mono text-[19px] text-screen">
+                от {rub(position.d1)}
+                <span class="text-[12.5px] text-dim"> / сутки</span>
+              </p>
+              <button
+                type="button"
+                data-quiz-open
+                data-preset={touchPreset}
+                class={cardButton}
+              >
+                В смету
+              </button>
+            </div>
+          ))
+        }
+      </div>
+      {
+        positions.map((position) => (
+          <ProductLd name={position.label} price={position.d1} url={TOUCH_LINK.href} />
+        ))
+      }
+    </section>
+
+    {/* Что входит + отдельный блок про контент и настройку (ТЗ §5.4). */}
+    <section id="content" class="mt-20 grid gap-bento md:grid-cols-12">
+      <div class={`min-w-0 md:col-span-5 ${boxClass} p-6 sm:p-8`}>
+        <h2 class="text-[20px] font-semibold text-screen">Что входит в аренду</h2>
+        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+          {
+            SITE.included.map((item, index) => (
+              <li class="flex gap-3">
+                <span class="font-mono text-[13px] text-accent-soft">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <span>{item}</span>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+      <div class={`min-w-0 md:col-span-7 ${boxClass} p-6 sm:p-8`}>
+        <h2 class="text-[20px] font-semibold text-screen">Ваш контент и настройка</h2>
+        <p class="mt-4 text-[15px] leading-[1.6] text-text">
+          Презентацию, ролик или ссылку на веб-каталог принимаем заранее и настраиваем режим
+          киоска: экран стартует сразу с нужного раздела и не даёт гостю свернуть его в системное
+          меню. Если готового контента нет, панель работает как крупный планшет с браузером и
+          просмотрщиком файлов.
+        </p>
+        <p class="mt-4 text-[15px] leading-[1.6] text-text">
+          Правки — сменить слайд или поменять ссылку — техник вносит на площадке в день монтажа.
+        </p>
+      </div>
+    </section>
+
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    <section id="about" class="mt-20">
+      <h2 class="section-title mb-6">Когда берут сенсорную панель и что влияет на цену</h2>
+      <div class={`${boxClass} p-6 sm:p-9`}>
+        <div
+          data-seo-text
+          class="columns-1 gap-10 text-[15.5px] leading-[1.65] text-text lg:columns-2"
+        >
+          <p class="mt-0 mb-4">
+            Сенсорная панель отличается от обычной одним слоем — тач-плёнкой поверх экрана — но
+            меняет саму роль устройства: экран из фона превращается в инструмент, с которым гость
+            взаимодействует сам. Если задача — просто показать ролик или слайды, дешевле и
+            надёжнее взять обычную панель; тач нужен там, где от посетителя ждут действия: выбора,
+            регистрации, заявки.
+          </p>
+          <p class="mb-4">
+            Панель на стойке и интерактивный киоск закрывают разные ситуации. Панель встаёт туда,
+            где уже есть зона под экран — ресепшн, стенд, зона регистрации — и её легко
+            передвинуть в течение дня. Киоск — самостоятельный корпус с экраном, разъёмами и
+            креплением в сборе: его не нужно отдельно ставить на стойку или кронштейн, что удобно
+            там, где важен цельный вид без видимых кабелей и монтажных элементов.
+          </p>
+          <p class="mb-4">
+            Контент готовим под сценарий: локальную презентацию или видео панель показывает без
+            подключения к сети, а веб-каталог, форма регистрации или интеграция с CRM требуют
+            интернета — на площадке просим проводную сеть или привозим мобильный роутер. Режим
+            киоска блокирует выход в системное меню и браузер за пределами вашего сайта, поэтому с
+            панелью можно оставить гостя один на один.
+          </p>
+          <p class="mb-4">
+            На стоимость влияют размер экрана (панель 55″ дешевле панели 65″ и киоска), срок
+            аренды, сложность контента и требования к сети. Отдельно считаем настройку нестандартного
+            сценария, например приём данных в вашу CRM или форму с валидацией, выезд за МКАД и
+            ночной монтаж на выставке, когда стенд собирают до открытия.
+          </p>
+          <p class="mb-0">
+            Аренда сенсорной панели и интерактивного киоска в Москве идёт с доставкой, монтажом и
+            демонтажом, а для юрлиц — с договором, счётом и закрывающими документами; при
+            необходимости работаем через ЭДО. Пришлите тип мероприятия, площадку и что должно быть
+            на экране — вернёмся со сметой за 30&nbsp;минут в рабочее время и настроим контент до
+            выезда.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="mt-20">
+      <h2 class="section-title mb-6">Вопросы по тач-панелям</h2>
+      <FaqBlock items={FAQ_TOUCH} withJsonLd />
+    </section>
+
+    <section id="cta" class="mt-20">
+      <CtaBlock preset={touchPreset} />
+    </section>
+  </div>
+</Base>

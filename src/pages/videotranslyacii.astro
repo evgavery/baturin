@@ -1,0 +1,269 @@
+---
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import CtaBlock from '../components/CtaBlock.astro';
+import FaqBlock from '../components/FaqBlock.astro';
+import ProductLd from '../components/seo/ProductLd.astro';
+import { SITE } from '../config/site';
+import { FAQ_STREAM } from '../data/faq';
+import { HOME_LINK, STREAM_LINK } from '../data/nav';
+import Base from '../layouts/Base.astro';
+import { rub } from '../lib/format';
+
+// Страница направления по ТЗ §5.5 — это услуга, а не железо, поэтому структура другая:
+// состав услуги вместо характеристик, пакеты вместо диагоналей, процесс работы вместо
+// способов установки. Цена в title — от SITE.prices.stream (без «/сутки»: трансляция
+// считается за проект, а не по дням, как позиции touchTable/streamTable без d2/d3).
+const title = `Видеотрансляции в Москве — от ${rub(SITE.prices.stream)} | ${SITE.brandName}`;
+const description = `Видеотрансляции мероприятий: камеры, режиссёр, вывод на экраны и в онлайн, запись. От ${rub(SITE.prices.stream)}. Смета за 30 минут в мессенджер.`;
+
+const streamPreset = JSON.stringify({ services: ['stream'] });
+
+const facts = [
+  {
+    label: 'Пакетов',
+    value: `${SITE.prices.streamTable.length}`,
+    note: 'от одной камеры на докладе до гибрида зала с онлайном',
+  },
+  {
+    label: 'Смета',
+    value: '30 мин',
+    note: 'в Telegram, WhatsApp или MAX — в рабочее время',
+  },
+];
+
+// Состав услуги — ровно по ТЗ §5.5: камеры и операторы, режиссёр трансляции, вывод на экраны
+// площадки и в онлайн (сайт, VK Видео, Telegram, закрытые Zoom/вебинары), запись.
+const composition = [
+  {
+    title: 'Камеры и операторы',
+    text: 'Число камер зависит от сценария: одна общим планом — для доклада, две-три с переключением — для дискуссии или награждения.',
+  },
+  {
+    title: 'Режиссёр трансляции',
+    text: 'Ведёт эфир с пульта: переключает планы, выводит титры и презентацию докладчика, следит за коммутацией и резервным сигналом.',
+  },
+  {
+    title: 'Вывод на экраны площадки',
+    text: 'Картинка с камер и презентация докладчика идут на экраны в зале — с дальних рядов видно так же хорошо, как с первого.',
+  },
+  {
+    title: 'Вывод в онлайн',
+    text: 'Один сигнал уходит сразу в нужные каналы: на ваш сайт, в VK Видео, Telegram, закрытый Zoom или вебинарную платформу — с доступом по ссылке или паролю для закрытых мероприятий.',
+  },
+  {
+    title: 'Запись',
+    text: 'Мероприятие пишем локально и передаём файл или ссылку на облако после эфира; по запросу делаем базовый монтаж: обрезку и склейку блоков.',
+  },
+];
+
+// Пакеты — из SITE.prices.streamTable; заметки по каждому считаны по индексу.
+const PACKAGE_NOTES = [
+  'Один спикер, общий план зала, вывод в один канал — сайт или Zoom. Для доклада или пресс-подхода без сложной режиссуры.',
+  'Смена планов, крупный план спикера и зала, титры с именами и должностями. Для дискуссии, панели или награждения.',
+  'Очный зал и удалённые участники в одном эфире: подключение спикеров по Zoom, синхронный показ презентаций, несколько каналов вывода одновременно.',
+];
+const packages = SITE.prices.streamTable.map((row, index) => ({
+  ...row,
+  note: PACKAGE_NOTES[index],
+}));
+
+// Процесс работы — бриф → техплан → трансляция → запись (ТЗ §5.5), не «Как мы работаем»
+// с главной: там про заявку и договор, здесь — про сценарий и эфир.
+const process = [
+  {
+    kicker: 'Бриф',
+    text: 'Формат мероприятия, число залов и спикеров, куда идёт трансляция — на сайт, в соцсеть или в закрытый Zoom. Достаточно программы и адреса площадки.',
+  },
+  {
+    kicker: 'Технический план',
+    text: 'Считаем камеры и точки съёмки, канал интернета и резервный источник, согласуем коммутацию со звуком площадки и время заезда бригады.',
+  },
+  {
+    kicker: 'Трансляция',
+    text: 'Режиссёр ведёт эфир на площадке: переключает планы, выводит титры и презентацию, следит за сигналом в каждом канале вывода.',
+  },
+  {
+    kicker: 'Запись',
+    text: 'После эфира передаём файл или ссылку на облако; по запросу собираем короткий смонтированный ролик из записи.',
+  },
+];
+
+const boxClass = 'rounded-box border border-line bg-surface';
+const primaryButton =
+  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
+const secondaryButton =
+  'flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
+const cardButton =
+  'mt-5 flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
+---
+
+<Base title={title} description={description}>
+  <div class="mx-auto max-w-[1200px] px-4 pt-4 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { name: HOME_LINK.label, url: HOME_LINK.href },
+        { name: STREAM_LINK.label, url: STREAM_LINK.href },
+      ]}
+    />
+
+    {/* Интро услуги: что входит в трансляцию и куда она идёт. */}
+    <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
+      <div
+        class={`flex min-w-0 flex-col justify-between gap-8 ${boxClass} p-6 sm:p-9 md:col-span-8`}
+      >
+        <div>
+          <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
+            Москва и МО · видеотрансляции мероприятий
+          </p>
+          <h1
+            class="mt-5 max-w-[20ch] font-display text-[clamp(28px,3.8vw,46px)] leading-[1.06] font-semibold tracking-[-0.025em] text-balance text-screen"
+          >
+            Видеотрансляции мероприятий
+          </h1>
+          <p class="mt-4 max-w-[62ch] text-[17px] leading-[1.5] text-text">
+            Трансляция выводит происходящее в зале на экраны площадки и в сеть — на сайт, в VK
+            Видео, Telegram или в закрытый Zoom для тех, кто не смог приехать. В пакет входят
+            камеры с операторами, режиссёр трансляции с коммутацией и запись мероприятия. Три
+            готовых пакета — от одной камеры на докладе до гибрида зала с онлайном, цена от
+            {rub(SITE.prices.stream)}. Смету присылаем в мессенджер за 30&nbsp;минут в рабочее
+            время.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <button type="button" data-quiz-open data-preset={streamPreset} class={primaryButton}
+            >Получить смету</button
+          >
+          <a href={SITE.phoneHref} data-goal="click_phone" class={secondaryButton}>Позвонить</a>
+        </div>
+      </div>
+
+      <div class="grid min-w-0 gap-bento md:col-span-4">
+        {
+          facts.map((fact) => (
+            <div class={`${boxClass} p-6`}>
+              <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">
+                {fact.label}
+              </p>
+              <p class="mt-3 font-display text-[30px] leading-none font-semibold text-screen">
+                {fact.value}
+              </p>
+              <p class="mt-2.5 text-[14.5px] text-text">{fact.note}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Состав услуги — ТЗ §5.5: это не характеристики железа, а этапы и роли. */}
+    <section id="composition" class="mt-20">
+      <h2 class="section-title mb-6">Из чего состоит трансляция</h2>
+      <div class="grid gap-bento sm:grid-cols-2 lg:grid-cols-3">
+        {
+          composition.map((item) => (
+            <div class={`${boxClass} p-6`}>
+              <h3 class="text-[17px] font-semibold text-screen">{item.title}</h3>
+              <p class="mt-3 text-[14.5px] leading-[1.55] text-text">{item.text}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* Пакеты и цены: три карточки из SITE.prices.streamTable + Product-разметка на каждую. */}
+    <section id="packages" class="mt-20">
+      <h2 class="section-title mb-6">Пакеты трансляции</h2>
+      <div class="grid gap-bento md:grid-cols-3">
+        {
+          packages.map((pack) => (
+            <div data-package class={`flex flex-col ${boxClass} p-6`}>
+              <h3 class="text-[19px] font-semibold text-screen">{pack.label}</h3>
+              <p class="mt-2 mb-6 max-w-[42ch] text-[14.5px] text-text">{pack.note}</p>
+              <p class="mt-auto font-mono text-[19px] text-screen">от {rub(pack.d1)}</p>
+              <button type="button" data-quiz-open data-preset={streamPreset} class={cardButton}>
+                В смету
+              </button>
+            </div>
+          ))
+        }
+      </div>
+      {
+        packages.map((pack) => (
+          <ProductLd name={pack.label} price={pack.d1} url={STREAM_LINK.href} />
+        ))
+      }
+    </section>
+
+    {/* Процесс работы (ТЗ §5.5): бриф → техплан → трансляция → запись. */}
+    <section id="process" class="mt-20">
+      <h2 class="section-title mb-6">Как проходит работа</h2>
+      <ol class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+        {
+          process.map((step) => (
+            <li class={`${boxClass} p-6`}>
+              <p class="font-mono text-[11.5px] tracking-[0.1em] text-focus uppercase">
+                {step.kicker}
+              </p>
+              <p class="mt-3.5 text-[15px] text-text">{step.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). */}
+    <section id="about" class="mt-20">
+      <h2 class="section-title mb-6">Когда нужна трансляция и что влияет на цену</h2>
+      <div class={`${boxClass} p-6 sm:p-9`}>
+        <div
+          data-seo-text
+          class="columns-1 gap-10 text-[15.5px] leading-[1.65] text-text lg:columns-2"
+        >
+          <p class="mt-0 mb-4">
+            Трансляция нужна, когда в зале не помещается вся аудитория, к которой хотите
+            обратиться. Гибридная конференция — самый частый случай: часть слушателей сидит в
+            зале, часть подключается из другого города или просто не смогла доехать до площадки в
+            будний день. Обеим группам показывают один и тот же доклад в одно и то же время, а не
+            пересказ по итогам.
+          </p>
+          <p class="mb-4">
+            Второй сценарий — событие с параллельными залами: пленарная часть идёт в одном зале,
+            дискуссии и мастер-классы — в других, и часть программы неизбежно проходит мимо гостя.
+            Трансляция из главного зала на экраны в остальных снимает эту проблему: человек
+            остаётся в удобном ему зале и не бегает между этажами ради одного доклада.
+          </p>
+          <p class="mb-4">
+            Третья причина — запись. Доклад, презентация продукта или отчёт перед советом
+            директоров годятся и после эфира: записью делятся с теми, кто не смог присутствовать,
+            выкладывают в закрытый доступ для сотрудников или используют как маркетинговый
+            материал. Без трансляции с камер и режиссёрским переключением такую запись потом
+            собрать неоткуда.
+          </p>
+          <p class="mb-4">
+            Цену определяют число камер и необходимость режиссёра: одна камера общим планом стоит
+            дешевле, чем съёмка с переключением между двумя-тремя точками. Дальше — куда идёт сигнал: вывод
+            в один канал стоит меньше, чем одновременно на экраны зала, сайт и закрытый Zoom. На
+            смету влияют также длительность эфира, необходимость записи и монтажа после
+            мероприятия и техническая готовность площадки — стабильный интернет-канал и доступ к
+            звуку с пульта.
+          </p>
+          <p class="mb-0">
+            До выезда бригада проверяет канал связи и точки для камер, резервный источник
+            интернета берём с собой на случай, если основной канал площадки не справится. Тест
+            связи и оборудования проходит до начала мероприятия, а не в момент выхода в эфир.
+            Пришлите программу, адрес площадки и куда должна идти трансляция — вернёмся со сметой
+            за 30&nbsp;минут в рабочее время.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq" class="mt-20">
+      <h2 class="section-title mb-6">Вопросы по видеотрансляциям</h2>
+      <FaqBlock items={FAQ_STREAM} withJsonLd />
+    </section>
+
+    <section id="cta" class="mt-20">
+      <CtaBlock preset={streamPreset} />
+    </section>
+  </div>
+</Base>
