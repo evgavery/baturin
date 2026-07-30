@@ -15,3 +15,9 @@ playwright-report/
 
 # Артефакты браузерных сессий playwright-cli
 .playwright-cli/
+
+/docs
+
+# Внутренние рабочие документы — не для публичного репозитория
+/TZ-arenda-ekranov.md
+/CLAUDE.md
