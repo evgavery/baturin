@@ -1,15 +1,23 @@
 ---
 import type { Diagonal } from '../data/diagonals';
+import { diagonalHref } from '../data/nav';
 import { rub } from '../lib/format';
 
 interface Props {
   d: Diagonal;
   /** Тег подписи диагонали: на витрине это заголовок карточки, вне ряда — просто цифра. */
   heading?: 'h2' | 'h3' | 'div';
+  /** В ряду масштаба сам экран — ссылка на страницу диагонали; на странице диагонали
+      карточка стоит в hero и ссылкой на саму себя быть не должна. */
+  link?: boolean;
 }
 
-const { d, heading = 'div' } = Astro.props;
+const { d, heading = 'div', link = false } = Astro.props;
 const Heading = heading;
+const Screen = link ? 'a' : 'span';
+const screenAttrs = link
+  ? { href: diagonalHref(d.size), 'aria-label': `Панель ${d.size} дюймов — цены и условия аренды` }
+  : {};
 
 // Масштаб ряда задаёт родитель (HumanScaleRow); вне ряда карточка рисуется в базовом масштабе DS.
 const width = `calc(var(--px-per-cm, 1.28px) * ${d.widthCm})`;
@@ -31,14 +39,15 @@ const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
         class="panel flex w-full items-center justify-center rounded-[10px] border border-line-strong bg-bg-deep p-[3px]"
         style={`height:${height}`}
       >
-        <span
+        <Screen
           class="screen screen-on flex aspect-[16/9] w-full items-center justify-center rounded-[8px]"
+          {...screenAttrs}
         >
           <span
             class="digit font-display leading-none font-semibold text-screen"
             style={`font-size:${digitSize}`}>{d.size}″</span
           >
-        </span>
+        </Screen>
       </Heading>
       <span class="block h-[9px] w-[10px] bg-line-strong" aria-hidden="true"></span>
       <span class="block h-[3px] w-[38%] rounded-full bg-line-strong" aria-hidden="true"></span>
@@ -70,15 +79,10 @@ const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
 
 <style>
   .screen {
-    transition:
-      box-shadow 250ms ease,
-      border-color 250ms ease;
+    transition: box-shadow 250ms ease;
   }
-  /* В ряду масштаба внешнее свечение выключено переменной (см. HumanScaleRow) —
-     там ховер-отклик остаётся только на бордере. */
   .card:hover .screen {
-    box-shadow: var(--screen-hover-glow, var(--shadow-glow-lg));
-    border-color: var(--color-line-on-strong);
+    box-shadow: var(--shadow-glow-lg);
   }
   .digit {
     /* Свет от глифа: цифра «горит» на экране, отдельного цвета для этого не заводим. */

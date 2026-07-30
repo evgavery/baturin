@@ -15,8 +15,8 @@ const humanWidth = `calc(var(--px-per-cm) * ${HUMAN_CM} * 60 / 149.1)`;
 ---
 
 <div id="scale-row" class="rounded-box border border-line bg-surface p-4 sm:p-6">
-  <div class="row flex items-stretch gap-6 overflow-x-auto pb-2">
-    {DIAGONALS.map((d) => <ScreenCard d={d} heading="h3" />)}
+  <div class="row flex items-stretch gap-6 overflow-x-auto">
+    {DIAGONALS.map((d) => <ScreenCard d={d} heading="h3" link />)}
 
     <div class="flex w-fit flex-none flex-col items-center">
       <div class="flex items-end" style="min-height: var(--screen-slot)">
@@ -55,16 +55,18 @@ const humanWidth = `calc(var(--px-per-cm) * ${HUMAN_CM} * 60 / 149.1)`;
     --px-per-cm: 1.28px;
     /* Общий «пол»: экраны и человек стоят на одной линии, поэтому слот равен росту человека. */
     --screen-slot: calc(var(--px-per-cm) * 175);
-    /* Скроллпорт (overflow-x-auto) режет внешние тени по краям ряда — виднее всего на
-       крайней 55″. Поэтому внутри ряда внешних свечений нет: экраны светятся внутренним
-       градиентом .screen-on, ховер-отклик карточки — бордер (см. ScreenCard). */
-    --screen-hover-glow: none;
+    /* Скроллпорт (overflow-x-auto) не должен резать свечения экранов прямо у карточек:
+       отрицательные поля, равные паддингу внешнего бокса, раздвигают его до рамки бокса —
+       к ней ореол уже гаснет, и линия обрезки не читается. Снизу на 8px больше (бывший
+       pb-2) — запас под overlay-скроллбар горизонтальной прокрутки. */
+    margin: -16px;
+    padding: 16px 16px 24px;
   }
-  .row :global(.screen-on) {
-    box-shadow: none;
-  }
-  .row :global(button[data-quiz-open]:hover) {
-    box-shadow: none;
+  @media (min-width: 640px) {
+    .row {
+      margin: -24px;
+      padding: 24px 24px 32px;
+    }
   }
   @media (max-width: 768px) {
     .row {
