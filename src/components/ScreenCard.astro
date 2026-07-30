@@ -70,10 +70,15 @@ const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
 
 <style>
   .screen {
-    transition: box-shadow 250ms ease;
+    transition:
+      box-shadow 250ms ease,
+      border-color 250ms ease;
   }
+  /* В ряду масштаба внешнее свечение выключено переменной (см. HumanScaleRow) —
+     там ховер-отклик остаётся только на бордере. */
   .card:hover .screen {
-    box-shadow: var(--shadow-glow-lg);
+    box-shadow: var(--screen-hover-glow, var(--shadow-glow-lg));
+    border-color: var(--color-line-on-strong);
   }
   .digit {
     /* Свет от глифа: цифра «горит» на экране, отдельного цвета для этого не заводим. */
