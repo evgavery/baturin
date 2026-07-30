@@ -3,7 +3,7 @@ import { SITE } from '../../src/config/site';
 import { DIAGONALS } from '../../src/data/diagonals';
 import { FAQ_HOME } from '../../src/data/faq';
 import { DIRECTION_LINKS } from '../../src/data/nav';
-import { readJsonLd, rub } from './helpers';
+import { plain, readJsonLd, requireNode, rub } from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/');
@@ -15,6 +15,23 @@ test('на главной один H1 с точным заголовком, и �
   await expect(h1).toHaveCount(1);
   await expect(h1).toHaveText('Аренда экранов для мероприятий в Москве');
   await expect(page.locator('[data-slide] h1')).toHaveCount(0);
+});
+
+// Финальное ревью, IMPORTANT 1: title (72 зн.) и description (185 зн.) главной выходили за
+// лимиты выдачи ТЗ §9 (≤60/≤160) — тест на это раньше отсутствовал (в отличие от
+// calc.spec.ts/plazmy.spec.ts). Паттерн проверки — тот же, что там.
+test('title и description главной укладываются в лимиты выдачи (ТЗ §9)', async ({ page }) => {
+  const title = plain(await page.title());
+  expect(title.length).toBeLessThanOrEqual(60);
+  expect(title).toContain('Аренда экранов для мероприятий в Москве');
+  expect(title).toContain(SITE.brandName);
+
+  const description =
+    (await page.locator('meta[name="description"]').getAttribute('content')) ?? '';
+  expect(description.length).toBeLessThanOrEqual(160);
+  expect(plain(description)).toContain(plain(rub(SITE.prices.ledM2)));
+  expect(plain(description)).toContain('Москве');
+  expect(plain(description)).toContain('30 минут');
 });
 
 test('hero: кнопка сметы открывает квиз, тихий звонок ведёт на номер из конфига', async ({
@@ -156,6 +173,17 @@ test('микроразметка: LocalBusiness, FAQPage из видимых т�
   expect(types).toContain('LocalBusiness');
   expect(types).toContain('Review');
   expect(types.filter((type) => type === 'Product')).toHaveLength(4);
+
+  // Финальное ревью, IMPORTANT 2: Review.itemReviewed обязан ссылаться на ТОТ ЖЕ узел
+  // LocalBusiness по '@id' (Base.astro), а не дублировать его как отдельную безымянную сущность —
+  // иначе в графе получаются несвязанные организации и отзывы формально не о этом бизнесе.
+  const business = requireNode(nodes, 'LocalBusiness');
+  expect(business['@id']).toBe(new URL('/#business', SITE.url).href);
+  const reviews = nodes.filter((node) => node['@type'] === 'Review');
+  expect(reviews).toHaveLength(3);
+  for (const review of reviews) {
+    expect(review.itemReviewed).toEqual({ '@id': business['@id'] });
+  }
 
   const faq = nodes.find((node) => node['@type'] === 'FAQPage');
   if (!faq) throw new Error('На главной нет разметки FAQPage');

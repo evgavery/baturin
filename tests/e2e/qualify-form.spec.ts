@@ -1,26 +1,12 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { SITE } from '../../src/config/site';
-import { collectGoals } from './helpers';
-
-// В test_mode (tests/fixtures/lead-config.test.php) каждая принятая заявка дописывается сюда
-// строкой JSON — тот же лог, что читают quiz.spec.ts, short-form.spec.ts и lead-api.spec.ts.
-const LOG_PATH = path.join(process.cwd(), 'tests/.tmp/leads.log');
+import { collectGoals, findLogLine } from './helpers';
 
 // Маркеры, которые ищем в логе, помечаем суффиксом текущего прогона — накопительный лог иначе
 // может дать ложный PASS по строке от прошлого запуска (см. quiz.spec.ts/short-form.spec.ts).
+// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts (финальная фикс-волна:
+// раньше были продублированы в этом файле и ещё трёх спеках).
 const runId = Date.now();
-
-function readLog(): string {
-  return existsSync(LOG_PATH) ? readFileSync(LOG_PATH, 'utf-8') : '';
-}
-
-function findLogLine(marker: string): string | undefined {
-  return readLog()
-    .split('\n')
-    .find((line) => line.includes(marker));
-}
 
 // Свой X-Test-IP на файл — иначе браузерные POST этого файла делят rate-limit-бакет 127.0.0.1
 // (окно фикстуры 2 с) с quiz.spec.ts и short-form.spec.ts (см. quiz.spec.ts).

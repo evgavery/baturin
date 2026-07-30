@@ -80,14 +80,34 @@ function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((item) => typeof item === 'string');
 }
 
+// Реальные значения Channel/ClientType — те же списки, что рендерят ChannelRadios.astro и
+// CLIENT_TYPE_OPTIONS в QuizModal.astro. Держим их здесь, а не импортируем из quiz-core: там это
+// типы (стираются в рантайме), а не значения, — whitelist обязан жить рядом с проверкой.
+const CHANNEL_VALUES: readonly Channel[] = ['telegram', 'whatsapp', 'max', 'email', 'call'];
+const CLIENT_TYPE_VALUES: readonly ClientType[] = ['agency', 'organizer', 'company', 'other'];
+
+function isChannel(v: unknown): v is Channel {
+  return typeof v === 'string' && (CHANNEL_VALUES as readonly string[]).includes(v);
+}
+
+function isClientType(v: unknown): v is ClientType {
+  return typeof v === 'string' && (CLIENT_TYPE_VALUES as readonly string[]).includes(v);
+}
+
 /**
  * Сырые данные из sessionStorage/data-preset могут быть чем угодно — старая версия формата,
  * ручная правка стораджа, опечатка в preset на странице (например `{"services":"plasma"}` —
  * строка вместо массива). initialState() слепо спредит их поверх дефолтов, так что несовпадение
  * ФОРМЫ поля не падает сразу на open, а роняет первое же взаимодействие: например,
  * `state.services.filter(...)` в handleInput бросает, если services — строка, а не массив.
- * Проверяем именно форму (тип) каждого поля по QuizState — не значение; то, что не подходит по
- * типу, просто отбрасываем (остаётся дефолт из initialState), без попытки угадать/починить.
+ * Проверяем форму (тип) каждого поля по QuizState; для channel/clientType — ещё и значение по
+ * whitelist реальных enum-значений (финальное ревью, IMPORTANT 3): произвольная строка вроде
+ * `{"channel":"pigeon"}` раньше проходила проверку typeof === 'string' и долетала до
+ * `CHANNEL_UX[channel]` в applyChannelUx() — обращение к несуществующему ключу объекта даёт
+ * `undefined`, а `.placeholder` на нём бросает TypeError ПРЯМО в render(), которая выполняется до
+ * showModal(); если такое значение осело в sessionStorage, квиз переставал открываться вообще,
+ * пока сторадж не очистят вручную. Всё, что не подходит по типу/значению, просто отбрасываем
+ * (остаётся дефолт из initialState), без попытки угадать/починить.
  */
 function sanitizePartialState(raw: Record<string, unknown>): Partial<QuizState> {
   const out: Partial<QuizState> = {};
@@ -108,10 +128,10 @@ function sanitizePartialState(raw: Record<string, unknown>): Partial<QuizState> 
   if (typeof raw.comment === 'string') out.comment = raw.comment;
   if (typeof raw.name === 'string') out.name = raw.name;
   if (typeof raw.company === 'string') out.company = raw.company;
-  if (raw.clientType === null || typeof raw.clientType === 'string') {
+  if (raw.clientType === null || isClientType(raw.clientType)) {
     out.clientType = raw.clientType as ClientType | null;
   }
-  if (raw.channel === null || typeof raw.channel === 'string') out.channel = raw.channel as Channel | null;
+  if (raw.channel === null || isChannel(raw.channel)) out.channel = raw.channel as Channel | null;
   if (typeof raw.contact === 'string') out.contact = raw.contact;
   if (typeof raw.consent === 'boolean') out.consent = raw.consent;
   return out;

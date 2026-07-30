@@ -1,7 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { apiPost } from './helpers';
+import { apiPost, findLogLine } from './helpers';
 
 // Валидный payload — образец из ТЗ §6.4 / брифа Task 9.
 const valid = {
@@ -23,25 +21,13 @@ const valid = {
   hp: '',
 };
 
-// В test_mode (tests/fixtures/lead-config.test.php) каждая принятая заявка дописывается сюда строкой JSON.
-const LOG_PATH = path.join(process.cwd(), 'tests/.tmp/leads.log');
-
 // Лог накопительный и между прогонами не чистится. Статичный маркер типа "@ivan_test" рискует
 // найтись в строке от ПРОШЛОГО прогона и дать ложный PASS, даже если в ТЕКУЩЕМ прогоне запись не
 // записалась (регрессия). Поэтому маркеры, которые ищутся в логе, помечаем суффиксом текущего
 // прогона — тогда совпасть может только строка, записанная именно сейчас.
+// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts (финальная фикс-волна:
+// раньше были продублированы в этом файле и ещё трёх спеках).
 const runId = Date.now();
-
-function readLog(): string {
-  return existsSync(LOG_PATH) ? readFileSync(LOG_PATH, 'utf-8') : '';
-}
-
-/** Ищет в логе строку по уникальному маркеру заявки (обычно — contact), чтобы не путать кейсы между собой. */
-function findLogLine(marker: string): string | undefined {
-  return readLog()
-    .split('\n')
-    .find((line) => line.includes(marker));
-}
 
 test.describe('POST /api/lead.php', () => {
   test('(1) валидная заявка → 200 и попадает в лог', async ({ request }) => {

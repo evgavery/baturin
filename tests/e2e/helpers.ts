@@ -1,3 +1,5 @@
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
 import type { APIRequestContext, APIResponse, Page } from '@playwright/test';
 
 declare global {
@@ -55,4 +57,25 @@ export function apiPost(
     headers: { Origin: 'http://127.0.0.1:4321', 'X-Test-IP': ip },
     data: body,
   });
+}
+
+// В test_mode (tests/fixtures/lead-config.test.php) каждая принятая заявка дописывается сюда
+// строкой JSON — общий лог для всех форм сайта (обработчик /api/lead.php один на все формы).
+// Читают lead-api.spec.ts, quiz.spec.ts, short-form.spec.ts и qualify-form.spec.ts. Лог
+// накопительный, между прогонами не чистится: статичный маркер рискует найтись в строке от
+// ПРОШЛОГО прогона и дать ложный PASS, даже если СЕЙЧАС запись не произошла (регрессия) — поэтому
+// маркеры, которые ищут через findLogLine, спеки помечают суффиксом текущего прогона (свой `runId`
+// в каждом файле).
+const LOG_PATH = path.join(process.cwd(), 'tests/.tmp/leads.log');
+
+/** Содержимое лог-файла заявок целиком; пустая строка, если файл ещё не создан. */
+export function readLog(): string {
+  return existsSync(LOG_PATH) ? readFileSync(LOG_PATH, 'utf-8') : '';
+}
+
+/** Ищет в логе строку по уникальному маркеру заявки (обычно — contact), чтобы не путать кейсы между собой. */
+export function findLogLine(marker: string): string | undefined {
+  return readLog()
+    .split('\n')
+    .find((line) => line.includes(marker));
 }

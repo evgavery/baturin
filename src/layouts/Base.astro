@@ -20,9 +20,13 @@ const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL('/og-image.png', SITE.url).href;
 
 // Адрес не выдумываем: в разметке только город и зона работы (ТЗ §8.2 — точный адрес не подтверждён).
+// '@id' — финальное ревью, IMPORTANT 2: без него ReviewsBlock.astro не может сослаться на этот
+// узел, и каждый Review валидатор видел бы как отзыв о безымянной сущности (itemReviewed с одним
+// name — не тот же узел графа, что LocalBusiness). Один и тот же URL собирает оба места.
 const localBusiness = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
+  '@id': new URL('/#business', SITE.url).href,
   name: SITE.brandName,
   telephone: SITE.phone,
   email: SITE.email,

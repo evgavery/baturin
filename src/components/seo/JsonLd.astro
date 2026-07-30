@@ -4,6 +4,11 @@ interface Props {
 }
 
 const { data } = Astro.props;
+// Финальное ревью, MINOR 6: угловые скобки в сериализованном JSON экранируются JSON-escape'ом —
+// страховка от reviewBody/текстов с буквальным закрывающим тегом script внутри (например, отзыв
+// с упоминанием другого тега): без экранирования такая строка досрочно закрыла бы этот script и
+// сломала бы остаток страницы.
+const json = JSON.stringify(data).replace(/</g, '\\u003c');
 ---
 
-<script is:inline type="application/ld+json" set:html={JSON.stringify(data)} />
+<script is:inline type="application/ld+json" set:html={json} />

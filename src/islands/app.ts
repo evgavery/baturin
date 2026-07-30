@@ -71,7 +71,15 @@ function initQuizLauncher(): void {
     if (!trigger) return;
     event.preventDefault();
     const preset = trigger.getAttribute('data-preset') ?? undefined;
-    void import('./quiz').then((m) => m.openQuiz(preset));
+    void import('./quiz')
+      .then((m) => m.openQuiz(preset))
+      .catch(() => {
+        // Сеть отвалилась ровно на этом чанке — квиз открыть нечем, но молчать нельзя (финальное
+        // ревью, MINOR 9). MessengerDock — eager и уже на странице: ведём туда явно.
+        const dock = document.getElementById('messenger-dock');
+        dock?.scrollIntoView({ block: 'center' });
+        dock?.querySelector<HTMLElement>('a')?.focus();
+      });
   });
 }
 

@@ -1,28 +1,13 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import { SITE } from '../../src/config/site';
-import { collectGoals } from './helpers';
-
-// В test_mode (tests/fixtures/lead-config.test.php) каждая принятая заявка дописывается сюда
-// строкой JSON — тот же лог, что читают quiz.spec.ts и lead-api.spec.ts (обработчик /api/lead.php
-// общий для всех форм сайта).
-const LOG_PATH = path.join(process.cwd(), 'tests/.tmp/leads.log');
+import { collectGoals, findLogLine } from './helpers';
 
 // Лог накопительный, между прогонами не чистится. Статичный маркер рискует найтись в строке от
 // ПРОШЛОГО прогона и дать ложный PASS, даже если СЕЙЧАС запись не произошла (регрессия) — поэтому
 // маркеры, которые ищем в логе, помечаем суффиксом текущего прогона (см. quiz.spec.ts).
+// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts (финальная фикс-волна:
+// раньше были продублированы в этом файле и ещё трёх спеках).
 const runId = Date.now();
-
-function readLog(): string {
-  return existsSync(LOG_PATH) ? readFileSync(LOG_PATH, 'utf-8') : '';
-}
-
-function findLogLine(marker: string): string | undefined {
-  return readLog()
-    .split('\n')
-    .find((line) => line.includes(marker));
-}
 
 // #short-form — разметка CtaBlock с formType="short" (ТЗ §6.3). На сегодня в кодовой базе она
 // подключена только на главной ("/") — CtaBlock на остальных страницах (в т.ч. /plazmy/, которую

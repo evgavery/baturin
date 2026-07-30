@@ -1,26 +1,12 @@
-import { existsSync, readFileSync } from 'node:fs';
-import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { collectGoals } from './helpers';
-
-// В test_mode (tests/fixtures/lead-config.test.php) каждая принятая заявка дописывается сюда строкой JSON —
-// тот же лог, что читает lead-api.spec.ts (обработчик /api/lead.php общий для всех форм сайта).
-const LOG_PATH = path.join(process.cwd(), 'tests/.tmp/leads.log');
+import { collectGoals, findLogLine } from './helpers';
 
 // Лог накопительный, между прогонами не чистится. Статичный маркер рискует найтись в строке от
 // ПРОШЛОГО прогона и дать ложный PASS, даже если СЕЙЧАС запись не произошла (регрессия). Поэтому
 // маркеры, которые ищем в логе, помечаем суффиксом текущего прогона (см. lead-api.spec.ts).
+// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts (финальная фикс-волна:
+// раньше были продублированы в этом файле и ещё трёх спеках).
 const runId = Date.now();
-
-function readLog(): string {
-  return existsSync(LOG_PATH) ? readFileSync(LOG_PATH, 'utf-8') : '';
-}
-
-function findLogLine(marker: string): string | undefined {
-  return readLog()
-    .split('\n')
-    .find((line) => line.includes(marker));
-}
 
 // Кнопка «Получить смету» в шапке дублируется (десктоп-версия и версия внутри мобильного меню) —
 // в разметке видна только одна в зависимости от ширины вьюпорта,:visible берёт ровно её.
@@ -418,5 +404,40 @@ test.describe('Квиз «Получить смету»', () => {
 
     await expect(dialog.locator('[data-screen="error"]')).toBeVisible();
     await expect(dialog.locator('[data-action="retry"]')).toBeFocused();
+  });
+
+  // Финальное ревью (Фейбл), IMPORTANT 3: sanitizePartialState раньше принимала ЛЮБУЮ строку как
+  // channel (проверялся только typeof, не значение) — applyChannelUx() затем делает
+  // CHANNEL_UX[channel].placeholder, и обращение к несуществующему ключу бросает TypeError прямо
+  // в render(), которая выполняется ДО showModal(). Испорченный channel в sessionStorage (а не
+  // только в разовом data-preset) переживает перезагрузки — без whitelist квиз переставал
+  // открываться вообще, пока сторадж не очистят вручную.
+  test('(18) битый channel в sessionStorage не роняет открытие квиза', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    await page.addInitScript(() => {
+      sessionStorage.setItem('quiz_state_v1', JSON.stringify({ channel: 'pigeon' }));
+    });
+    await page.goto('/');
+    const dialog = page.locator('#quiz');
+
+    await page.locator(HEADER_QUIZ_BUTTON).click();
+
+    // render() выполняется ДО showModal() — если бы битый channel уронил рендер (как раньше —
+    // TypeError в applyChannelUx), диалог остался бы закрыт; то, что он открылся, уже часть
+    // доказательства устойчивости.
+    await expect(dialog).toBeVisible();
+    // Канал — дефолтный (initialState(): channel = null), а не «угадан» из мусора: ни один радио
+    // не выбран. Поля шага 3 остаются в DOM и получают значения от render() независимо от того,
+    // какой шаг сейчас показан (hidden скрывает только контейнер шага, не сам инпут).
+    await expect(dialog.locator('input[name="channel"]:checked')).toHaveCount(0);
+    // Плейсхолдер контакта — дефолтный (CHANNEL_UX_DEFAULT), а не результат обращения к
+    // несуществующему CHANNEL_UX['pigeon'].
+    await expect(dialog.locator('input[name="contact"]')).toHaveAttribute(
+      'placeholder',
+      'Телефон, ник или e-mail',
+    );
+    expect(errors).toEqual([]);
   });
 });

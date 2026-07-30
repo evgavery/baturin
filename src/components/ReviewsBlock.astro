@@ -7,12 +7,18 @@ import JsonLd from './seo/JsonLd.astro';
 // поэтому reviewRating не выдумываем.
 const reviews = REVIEWS.slice(0, 3);
 
+// itemReviewed ссылается на тот же узел LocalBusiness из Base.astro по '@id' (финальное ревью,
+// IMPORTANT 2), а не дублирует его как отдельную безымянную сущность — иначе в графе получались
+// 4 несвязанные организации (LocalBusiness + 3×Review.itemReviewed), и отзывы не считались бы
+// отзывами ИМЕННО об этом бизнесе.
+const businessId = new URL('/#business', SITE.url).href;
+
 const reviewLd = (review: (typeof REVIEWS)[number]) => ({
   '@context': 'https://schema.org',
   '@type': 'Review',
   reviewBody: review.text,
   author: { '@type': 'Person', name: review.author },
-  itemReviewed: { '@type': 'LocalBusiness', name: SITE.brandName },
+  itemReviewed: { '@id': businessId },
 });
 ---
 
