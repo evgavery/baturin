@@ -17,13 +17,11 @@ import { FAQ_HOME } from '../data/faq';
 import { AGENCY_LINK, LED_LINK, PLASMA_LINK, STREAM_LINK, TOUCH_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
 import { rub } from '../lib/format';
+import { primaryButton, secondaryButton } from '../lib/ui';
 
 // Порядок блоков — строго ТЗ §5.1 v1.1 (1–12). Блока «Почему мы» на главной нет:
 // его аргументы разложены по ответам FAQ и шагам процесса.
-// Финальное ревью, IMPORTANT 1: исходные title (72 зн.) и description (185 зн.) выходили за
-// лимиты ТЗ §9 (≤60/≤160) — description обрезался бы в выдаче. Хвост «— смета за 30 минут» из
-// title убран (семантика сроков осталась в description), кластер «аренда экранов в Москве» —
-// на месте.
+// title/description — в лимитах ТЗ §9 (≤60/≤160), длиннее нельзя: обрежутся в выдаче.
 const title = `Аренда экранов для мероприятий в Москве | ${SITE.brandName}`;
 const description = `Аренда плазменных панелей, LED-экранов от ${rub(SITE.prices.ledM2)}/м², тач-панелей и видеотрансляций в Москве. Свой парк, монтаж, безнал. Смета за 30 минут в мессенджер.`;
 
@@ -102,13 +100,13 @@ const directions = [
           <button
             type="button"
             data-quiz-open
-            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press"
+            class={primaryButton}
             >Получить смету</button
           >
           <a
             href={SITE.phoneHref}
             data-goal="click_phone"
-            class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            class={secondaryButton}
             >Позвонить</a
           >
         </div>
@@ -248,7 +246,7 @@ const directions = [
           </p>
           <a
             href={AGENCY_LINK.href}
-            class="flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-accent-soft"
+            class={primaryButton}
             >Условия для агентств</a
           >
         </div>
@@ -273,20 +271,6 @@ const directions = [
 </script>
 
 <style>
-  /* Одна оркестрованная сцена «включения экранов» в hero: только opacity, 4 бокса,
-     задержки 0/120/240/360 мс — вся сцена укладывается в 600 мс. Под prefers-reduced-motion
-     анимации глушит база (global.css). */
-  @keyframes screen-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  [data-screen-in] {
-    animation: screen-in 240ms ease-out both;
-  }
   .agency {
     background-image: linear-gradient(
       120deg,

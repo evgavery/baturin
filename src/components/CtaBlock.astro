@@ -1,6 +1,7 @@
 ---
 import { SITE } from '../config/site';
 import { POLICY_LINK } from '../data/nav';
+import { fieldLabel as label, fieldInput as field } from '../lib/ui';
 import ChannelRadios from './ChannelRadios.astro';
 
 interface Props {
@@ -14,9 +15,6 @@ interface Props {
 
 const { formType, preset, ctaLabel = 'Получить смету' } = Astro.props;
 
-const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
-const field =
-  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
 ---
 
 <div class="screen-on rounded-box px-5 py-9 sm:px-10 sm:py-12">
@@ -34,8 +32,6 @@ const field =
 
   {
     formType === 'short' ? (
-      /* Контракт Task 12 — тот же, что у #qualify-form: [data-errors] внутри формы,
-         [data-success] соседним блоком в той же карточке. */
       <div class="mx-auto mt-8 max-w-[720px] rounded-box border border-line-strong bg-bg/80 p-5 text-left sm:p-7">
         <form id="short-form" class="relative" novalidate>
           <div class="grid gap-bento sm:grid-cols-2">
@@ -116,13 +112,10 @@ const field =
             class="absolute -left-[9999px] h-0 w-0 opacity-0"
           />
 
-          {/* Живой регион ВСЕГДА в DOM (без hidden) — SR подписывается на регион, только если он
-             уже существовал к моменту изменения текста; появление региона одновременно с текстом
-             почти никогда не анонсируется (тот же приём, что в QuizModal.astro). Пусто = нет
-             ошибки, отступ гасим через :empty в <style> ниже. */}
+          {/* Live-регион всегда в DOM: появление вместе с текстом скринридер не анонсирует.
+             Пустой — схлопывается через :empty в <style>. */}
           <p data-errors aria-live="polite" class="mt-4 text-[13.5px] whitespace-pre-line text-err"></p>
-          {/* Прямые ссылки на мессенджеры при ошибке отправки — не в самом live-регионе (там
-             только текст), а соседним блоком: hidden на НЕ-live-элементе безопасен. */}
+          {/* Ссылки при ошибке — соседним блоком, не в live-регионе: hidden там безопасен. */}
           <p data-error-links hidden class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
             <a
               href={SITE.tgLink}
@@ -167,8 +160,7 @@ const field =
           </div>
         </form>
 
-        {/* tabindex=-1: после успеха фокус переводим сюда программно (hidden→visible без явного
-           переноса фокуса скринридер не анонсирует, см. form-submit.ts). */}
+        {/* tabindex=-1: после успеха form-submit.ts переводит фокус сюда программно. */}
         <div data-success hidden tabindex="-1" class="mt-6 rounded-sm border border-ok bg-ok/10 p-6">
           <p class="text-[17px] font-semibold text-screen">Заявка у менеджера</p>
           <p class="mt-1.5 text-[15px] text-text">
@@ -203,8 +195,6 @@ const field =
 </div>
 
 <style>
-  /* [data-errors] всегда в DOM (без hidden — см. комментарий у разметки); пока пусто, гасим
-     собственный отступ, чтобы не оставалось пустой полосы над кнопками. Приём — как в QuizModal.astro. */
   [data-errors]:empty {
     margin: 0;
   }

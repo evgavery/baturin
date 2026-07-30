@@ -3,9 +3,11 @@ interface Props {
   /** Префикс id: на странице две формы с одинаковыми полями, id обязаны различаться. */
   idPrefix: string;
   legend?: string;
+  /** false — сервер не отмечает канал: остров квиза сам ставит его из состояния (channel: null). */
+  checkedFirst?: boolean;
 }
 
-const { idPrefix, legend = 'Куда отправить смету' } = Astro.props;
+const { idPrefix, legend = 'Куда отправить смету', checkedFirst = true } = Astro.props;
 
 // Порядок и подписи каналов одинаковы во всех формах и в квизе (ТЗ §6.1 шаг 3, §6.2, §6.3).
 const CHANNELS = [
@@ -28,7 +30,7 @@ const CHANNELS = [
             name="channel"
             value={channel.value}
             id={`${idPrefix}-channel-${channel.value}`}
-            checked={index === 0}
+            checked={checkedFirst && index === 0}
             class="absolute inset-0 z-10 cursor-pointer opacity-0"
           />
           <span

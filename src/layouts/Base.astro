@@ -19,10 +19,8 @@ const { title, description, noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = new URL('/og-image.png', SITE.url).href;
 
-// Адрес не выдумываем: в разметке только город и зона работы (ТЗ §8.2 — точный адрес не подтверждён).
-// '@id' — финальное ревью, IMPORTANT 2: без него ReviewsBlock.astro не может сослаться на этот
-// узел, и каждый Review валидатор видел бы как отзыв о безымянной сущности (itemReviewed с одним
-// name — не тот же узел графа, что LocalBusiness). Один и тот же URL собирает оба места.
+// Адрес не выдумываем: только город и зона работы (ТЗ §8.2 — точный адрес не подтверждён).
+// '@id' обязателен: по нему Review.itemReviewed из ReviewsBlock.astro ссылается на этот узел.
 const localBusiness = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
@@ -31,6 +29,7 @@ const localBusiness = {
   telephone: SITE.phone,
   email: SITE.email,
   url: SITE.url,
+  image: ogImage,
   address: { '@type': 'PostalAddress', addressLocality: 'Москва', addressCountry: 'RU' },
   areaServed: 'Москва и Московская область',
   openingHours: 'Mo-Su 00:00-24:00',
@@ -52,26 +51,36 @@ const metrikaSnippet = `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m
     {/* У noindex-страниц (404) собственного URL нет — самоссылающийся canonical был бы ложью. */}
     {!noindex && <link rel="canonical" href={canonical} />}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link
-      rel="preload"
-      href="/fonts/onest-cyrillic-wght-normal.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
-    <link
-      rel="preload"
-      href="/fonts/unbounded-cyrillic-wght-normal.woff2"
-      as="font"
-      type="font/woff2"
-      crossorigin
-    />
+    {
+      /* Прелоад всех шести сабсетов: каждый нужен первому экрану любой страницы (лого —
+         Unbounded latin, телефон и цифры — mono latin, кикеры — mono cyrillic, LED/indoor —
+         Onest latin). Без прелоада шрифт проигрывает гонку первой отрисовке даже из кеша,
+         и подмена метрик двигает шапку и текст на каждом переходе по сайту. */
+      [
+        'onest-cyrillic',
+        'onest-latin',
+        'unbounded-cyrillic',
+        'unbounded-latin',
+        'jetbrains-mono-cyrillic',
+        'jetbrains-mono-latin',
+      ].map((subset) => (
+        <link
+          rel="preload"
+          href={`/fonts/${subset}-wght-normal.woff2`}
+          as="font"
+          type="font/woff2"
+          crossorigin
+        />
+      ))
+    }
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="ru_RU" />
+    <meta property="og:site_name" content={SITE.brandName} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {!noindex && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
     <JsonLd data={localBusiness} />
     {metrikaId > 0 && <script is:inline set:html={metrikaSnippet} />}
     <script>

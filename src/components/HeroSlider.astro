@@ -93,6 +93,35 @@ const slides = [
     </div>
     <button
       type="button"
+      data-pause
+      aria-label="Приостановить автопрокрутку"
+      class="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-screen/40 text-screen transition-colors duration-200 hover:bg-accent/30"
+    >
+      <svg
+        data-icon-pause
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <rect x="2" y="1.5" width="3" height="9" rx="1"></rect>
+        <rect x="7" y="1.5" width="3" height="9" rx="1"></rect>
+      </svg>
+      <svg
+        data-icon-play
+        class="hidden"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path d="M3.2 1.8v8.4c0 .63.69 1.01 1.22.68l6.6-4.2a.8.8 0 0 0 0-1.36l-6.6-4.2A.8.8 0 0 0 3.2 1.8Z"></path>
+      </svg>
+    </button>
+    <button
+      type="button"
       data-prev
       aria-label="Предыдущий слайд"
       class="flex h-11 w-11 flex-none items-center justify-center rounded-full border border-screen/40 text-[15px] text-screen transition-colors duration-200 hover:bg-accent/30"
@@ -109,6 +138,12 @@ const slides = [
 </section>
 
 <style>
+  /* Под reduced-motion автопрокрутки нет вовсе — кнопке паузы нечем управлять. */
+  @media (prefers-reduced-motion: reduce) {
+    [data-pause] {
+      display: none;
+    }
+  }
   /* Полоса прокрутки трека не нужна: положение показывают индикаторы. */
   .track {
     scrollbar-width: none;

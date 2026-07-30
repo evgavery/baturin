@@ -1,15 +1,9 @@
-// Честная проверка внутренних ссылок (Task 13, долг Task 5): `php -S -t dist` без роутера
-// отдаёт 200 с содержимым главной на ЛЮБОЙ несуществующий путь (проверено вручную:
-// `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4321/zzz-bogus` -> 200), поэтому
-// e2e-проверки вида `response.status() === 200` битую ссылку никогда не поймают — false-green.
-// Этот скрипт проверяет ссылки на уровне файловой системы, а не через HTTP: обходит
-// dist/**/*.html, собирает все внутренние href/src (начинающиеся с `/`, без протокола) и для
-// каждого убеждается, что соответствующий файл реально лежит в dist (с учётом
-// trailingSlash: 'always' — `/foo/` резолвится в `foo/index.html`, `/` — в `index.html`).
-//
-// exit 1, если хоть одна ссылка битая.
+// Проверка внутренних ссылок по файловой системе, а не через HTTP: `php -S -t dist` без
+// роутера отдаёт 200 на любой несуществующий путь, так что HTTP-проверки битых ссылок не
+// ловят. Каждый внутренний href/src должен резолвиться в реальный файл dist с учётом
+// trailingSlash: 'always'. exit 1, если хоть одна ссылка битая.
 
-import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, realpathSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -75,13 +69,13 @@ for (const file of htmlFiles) {
   }
 }
 
-/** existsSync правда и для директорий: `/plazmy/75` (без хвостового слэша, trailingSlash:
- * 'always') резолвится в dist/plazmy/75 — это РЕАЛЬНАЯ директория (там лежит index.html), значит
- * existsSync(target) === true, хотя ссылка не на файл, а на директорию — авторская ошибка
- * (нужен `/plazmy/75/`), которую сервер отдал бы редиректом, а не тем же ответом 200. Годится
- * только конкретный файл. */
+const REAL_DIST = realpathSync.native(DIST);
+
+/** Годится только файл (не директория: `/plazmy/75` без слэша — авторская ошибка) и только
+ * в точном регистре: APFS на macOS регистронезависима, Linux-хостинг — нет. */
 function isValidTarget(target) {
-  return existsSync(target) && statSync(target).isFile();
+  if (!existsSync(target) || !statSync(target).isFile()) return false;
+  return relative(REAL_DIST, realpathSync.native(target)) === relative(DIST, target);
 }
 
 const broken = [];

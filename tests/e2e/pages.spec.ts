@@ -341,7 +341,7 @@ test('/kontakty/: без карт и виджетов — нет iframe и ни 
   const externalHosts = new Set<string>();
   page.on('request', (request) => {
     const host = new URL(request.url()).host;
-    if (host !== '127.0.0.1:4321') externalHosts.add(host);
+    if (host !== '127.0.0.1:4381') externalHosts.add(host);
   });
 
   await page.goto('/kontakty/');

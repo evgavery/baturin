@@ -3,14 +3,11 @@ import { SITE } from '../config/site';
 import { REVIEWS } from '../data/reviews';
 import JsonLd from './seo/JsonLd.astro';
 
-// Отзывы — ТЗ §5.1 п.9: 3 текстовых отзыва + разметка Review. Оценок клиент не давал,
-// поэтому reviewRating не выдумываем.
+// Оценок клиент не давал — reviewRating не выдумываем.
 const reviews = REVIEWS.slice(0, 3);
 
-// itemReviewed ссылается на тот же узел LocalBusiness из Base.astro по '@id' (финальное ревью,
-// IMPORTANT 2), а не дублирует его как отдельную безымянную сущность — иначе в графе получались
-// 4 несвязанные организации (LocalBusiness + 3×Review.itemReviewed), и отзывы не считались бы
-// отзывами ИМЕННО об этом бизнесе.
+// itemReviewed ссылается по '@id' на узел LocalBusiness из Base.astro, а не дублирует его:
+// иначе в графе — несвязанные организации, и отзывы не считаются отзывами об этом бизнесе.
 const businessId = new URL('/#business', SITE.url).href;
 
 const reviewLd = (review: (typeof REVIEWS)[number]) => ({

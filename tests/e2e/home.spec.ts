@@ -17,9 +17,7 @@ test('на главной один H1 с точным заголовком, и �
   await expect(page.locator('[data-slide] h1')).toHaveCount(0);
 });
 
-// Финальное ревью, IMPORTANT 1: title (72 зн.) и description (185 зн.) главной выходили за
-// лимиты выдачи ТЗ §9 (≤60/≤160) — тест на это раньше отсутствовал (в отличие от
-// calc.spec.ts/plazmy.spec.ts). Паттерн проверки — тот же, что там.
+// Лимиты выдачи ТЗ §9: title ≤60, description ≤160 — длиннее обрезается в выдаче.
 test('title и description главной укладываются в лимиты выдачи (ТЗ §9)', async ({ page }) => {
   const title = plain(await page.title());
   expect(title.length).toBeLessThanOrEqual(60);
@@ -174,7 +172,7 @@ test('микроразметка: LocalBusiness, FAQPage из видимых т�
   expect(types).toContain('Review');
   expect(types.filter((type) => type === 'Product')).toHaveLength(4);
 
-  // Финальное ревью, IMPORTANT 2: Review.itemReviewed обязан ссылаться на ТОТ ЖЕ узел
+  // Review.itemReviewed обязан ссылаться на ТОТ ЖЕ узел
   // LocalBusiness по '@id' (Base.astro), а не дублировать его как отдельную безымянную сущность —
   // иначе в графе получаются несвязанные организации и отзывы формально не о этом бизнесе.
   const business = requireNode(nodes, 'LocalBusiness');

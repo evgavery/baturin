@@ -1,16 +1,14 @@
 ---
 import { SITE } from '../config/site';
+import { CLIENT_TYPE_OPTIONS } from '../data/form-options';
 import { AGENCY_LINK, POLICY_LINK } from '../data/nav';
-import type { ClientType, ServiceKey } from '../islands/quiz-core';
+import type { ServiceKey } from '../islands/quiz-core';
+import { fieldLabel as label, fieldInput as field } from '../lib/ui';
 import ChannelRadios from './ChannelRadios.astro';
 
-// Форма подбора под hero (ТЗ §6.2). Обработчик — eager island qualify-form.ts (Task 12).
-const label = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
-const field =
-  'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 text-[15px] text-screen placeholder:text-dim focus:border-accent';
+// Форма подбора под hero (ТЗ §6.2). Обработчик — eager island qualify-form.ts.
 
-// Типы value — из quiz-core (тот же ServiceKey/ClientType, что валидирует сервер и qualify-form.ts):
-// опечатка или устаревшее значение здесь ловится компилятором, а не тихо теряется в lead.php.
+// Типы value — из quiz-core: опечатка в значении ловится компилятором, а не теряется в lead.php.
 const INTERESTS: { value: ServiceKey; label: string }[] = [
   { value: 'plasma', label: 'Плазменные панели' },
   { value: 'led', label: 'LED-экран' },
@@ -19,12 +17,6 @@ const INTERESTS: { value: ServiceKey; label: string }[] = [
   { value: 'complex', label: 'Комплекс под задачу' },
 ];
 
-const CLIENT_TYPES: { value: ClientType; label: string }[] = [
-  { value: 'agency', label: 'Ивент-агентство' },
-  { value: 'organizer', label: 'Организатор мероприятий' },
-  { value: 'company', label: 'Компания (прямой заказчик)' },
-  { value: 'other', label: 'Другое' },
-];
 ---
 
 <div class="rounded-box border border-line-strong bg-surface p-5 shadow-glow-sm sm:p-8">
@@ -49,7 +41,7 @@ const CLIENT_TYPES: { value: ClientType; label: string }[] = [
         <label class={label} for="qualify-client-type">Кто вы</label>
         <select id="qualify-client-type" name="client_type" class={field}>
           <option value="">Кто вы</option>
-          {CLIENT_TYPES.map((item) => <option value={item.value}>{item.label}</option>)}
+          {CLIENT_TYPE_OPTIONS.map((item) => <option value={item.value}>{item.label}</option>)}
         </select>
       </div>
     </div>
@@ -113,7 +105,7 @@ const CLIENT_TYPES: { value: ClientType; label: string }[] = [
       </span>
     </label>
 
-    {/* Ловушка для ботов: поле скрыто и выведено из фокуса, живой человек его не заполнит. */}
+    {/* Ловушка для ботов: скрыта и выведена из фокуса. */}
     <input
       type="text"
       name="website"
@@ -123,13 +115,10 @@ const CLIENT_TYPES: { value: ClientType; label: string }[] = [
       class="absolute -left-[9999px] h-0 w-0 opacity-0"
     />
 
-    {/* Живой регион ВСЕГДА в DOM (без hidden) — SR подписывается на регион, только если он уже
-       существовал к моменту изменения текста; появление региона одновременно с текстом почти
-       никогда не анонсируется (тот же приём, что в QuizModal.astro). Пусто = нет ошибки, отступ
-       гасим через :empty в <style> ниже. */}
+    {/* Live-регион всегда в DOM: появление вместе с текстом скринридер не анонсирует.
+       Пустой — схлопывается через :empty в <style>. */}
     <p data-errors aria-live="polite" class="mt-4 text-[13.5px] whitespace-pre-line text-err"></p>
-    {/* Прямые ссылки на мессенджеры при ошибке отправки — не в самом live-регионе (там только
-       текст), а соседним блоком: hidden на НЕ-live-элементе безопасен. */}
+    {/* Ссылки при ошибке — соседним блоком, не в live-регионе: hidden там безопасен. */}
     <p data-error-links hidden class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
       <a
         href={SITE.tgLink}
@@ -167,10 +156,7 @@ const CLIENT_TYPES: { value: ClientType; label: string }[] = [
     </div>
   </form>
 
-  {/* Контракт Task 12: [data-errors] внутри формы, [data-success] — соседним блоком в той же
-      карточке; обработчику остаётся спрятать форму и снять hidden с блока успеха. tabindex=-1:
-      после успеха фокус переводим сюда программно (hidden→visible без явного переноса фокуса
-      скринридер не анонсирует, см. form-submit.ts). */}
+  {/* tabindex=-1: после успеха form-submit.ts переводит фокус сюда программно. */}
   <div
     data-success
     hidden
@@ -206,8 +192,6 @@ const CLIENT_TYPES: { value: ClientType; label: string }[] = [
 </script>
 
 <style>
-  /* [data-errors] всегда в DOM (без hidden — см. комментарий у разметки); пока пусто, гасим
-     собственный отступ, чтобы не оставалось пустой полосы над кнопками. Приём — как в QuizModal.astro. */
   [data-errors]:empty {
     margin: 0;
   }

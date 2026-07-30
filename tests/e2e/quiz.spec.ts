@@ -238,10 +238,10 @@ test.describe('Квиз «Получить смету»', () => {
     expect(line).toContain('"source":"direct"');
   });
 
-  // Обязательный кейс ревью Task 10: U+FEFF (BOM из копипасты телефона) матчится JS-\s, но не
+  // U+FEFF (BOM из копипасты телефона) матчится JS-\s, но не
   // серверным PCRE и не срезается PHP trim() — если фронт не чистит невидимые символы при вводе,
   // валидная на вид заявка получает 400 от сервера и клиент теряется молча. Нормализация — на
-  // уровне UI (Task 11), сами регексы quiz-core остаются посимвольным зеркалом lead.php.
+  // уровне UI, сами регексы quiz-core остаются посимвольным зеркалом lead.php.
   test('(11) невидимый BOM в контакте не мешает отправке', async ({ page }) => {
     await page.goto('/');
     const dialog = page.locator('#quiz');
@@ -260,7 +260,7 @@ test.describe('Квиз «Получить смету»', () => {
     await expect(dialog.locator('[data-screen="success"]')).toBeVisible();
   });
 
-  // Review Gate (Фейбл), MINOR 1: data-preset — JSON-строка на статичной странице, которую
+  // data-preset — JSON-строка на статичной странице, которую
   // может испортить будущая опечатка (например, `services` в единственном числе). Раньше
   // initialState() слепо спредил такой объект поверх дефолтов, и «plasma».includes(...)
   // как побочный эффект «угадывал» чекбокс, а первое же снятие галки роняло state.services.filter
@@ -294,7 +294,7 @@ test.describe('Квиз «Получить смету»', () => {
     await expect(dialog.locator('[data-step="2"]')).toBeVisible();
   });
 
-  // Review Gate (Фейбл), IMPORTANT 2: элемент с `hidden` отсутствует в accessibility tree, а
+  // Элемент с `hidden` отсутствует в accessibility tree, а
   // переход hidden→visible с уже вставленным текстом скринридеры стабильно не анонсируют.
   // [data-errors] обязан оставаться в DOM всегда (без hidden) — и пустым, и с текстом ошибки —
   // управляем только textContent. Заодно перепроверяем кейсы 3/5/6: toContainText по-прежнему честен.
@@ -321,7 +321,7 @@ test.describe('Квиз «Получить смету»', () => {
     await expect(errors).toHaveText('');
   });
 
-  // Review Gate (Фейбл), MINOR 2: click по затемнению закрывает диалог по координатам, но click
+  // click по затемнению закрывает диалог по координатам, но click
   // возникает и тогда, когда mousedown был внутри поля (выделение текста), а mouseup — за панелью.
   // Закрывать можно только жест, который И начался, И закончился за пределами панели.
   test('(14) выделение текста мышью не закрывает квиз, даже если отпустить за панелью', async ({
@@ -364,7 +364,7 @@ test.describe('Квиз «Получить смету»', () => {
     await expect(dialog).toBeHidden();
   });
 
-  // Review Gate (Фейбл), MINOR 3: setSubmitDisabled(true) дизейблит сфокусированную кнопку, потом
+  // setSubmitDisabled(true) дизейблит сфокусированную кнопку, потом
   // formView.hidden прячет её контейнер целиком — без явного переноса фокус проваливается на body,
   // и SR-пользователь остаётся «нигде». После showResultView фокус обязан быть на новом экране.
   test('(16) после успешной отправки фокус переходит на текст успеха', async ({ page }) => {
@@ -406,7 +406,7 @@ test.describe('Квиз «Получить смету»', () => {
     await expect(dialog.locator('[data-action="retry"]')).toBeFocused();
   });
 
-  // Финальное ревью (Фейбл), IMPORTANT 3: sanitizePartialState раньше принимала ЛЮБУЮ строку как
+  // sanitizePartialState раньше принимала ЛЮБУЮ строку как
   // channel (проверялся только typeof, не значение) — applyChannelUx() затем делает
   // CHANNEL_UX[channel].placeholder, и обращение к несуществующему ключу бросает TypeError прямо
   // в render(), которая выполняется ДО showModal(). Испорченный channel в sessionStorage (а не

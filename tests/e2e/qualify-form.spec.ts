@@ -26,8 +26,8 @@ test.describe('Форма подбора на главной (#qualify-form)', (
     await form.locator('select[name="client_type"]').selectOption('agency');
     await form.locator('input[name="need"]').fill(need);
     await form.locator('input[name="name"]').fill('Подбор Оборудования');
-    // Реальный клик мышью по видимому чипу (не .check()) — регрессионный тест на фикс hit-testing
-    // в общем ChannelRadios.astro (Task 11 MINOR), для формы подбора отдельно не был покрыт.
+    // Реальный клик мышью по видимому чипу (не .check()) — регресс на hit-testing:
+    // раньше декоративный span в ChannelRadios.astro перехватывал клики.
     await form.locator('label:has(input[name="channel"][value="telegram"])').click();
     await form.locator('input[name="contact"]').fill(marker);
     await form.locator('input[name="consent"]').check();

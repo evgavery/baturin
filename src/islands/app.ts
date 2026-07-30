@@ -4,7 +4,7 @@ import { reachGoal } from './goals';
 
 const UTM_KEYS = ['source', 'medium', 'campaign', 'content', 'term'] as const;
 
-/** Хранилища недоступны в приватном режиме Safari — тогда просто работаем без них. */
+/** Хранилища недоступны в приватном режиме Safari — работаем без них. */
 function readStore(store: Storage, key: string): string | null {
   try {
     return store.getItem(key);
@@ -21,7 +21,7 @@ function writeStore(store: Storage, key: string, value: string): void {
   }
 }
 
-/** Метки источника переживают переходы по сайту и уезжают вместе с заявкой. */
+/** Метки источника переживают переходы по сайту и уходят вместе с заявкой. */
 function saveUtm(): void {
   const params = new URLSearchParams(window.location.search);
   const utm: Record<string, string> = {};
@@ -52,17 +52,15 @@ function initNav(): void {
     const open = nav.toggleAttribute('data-open');
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
-    // nav стоит в DOM раньше toggle (нужно для порядка на десктопе, где меню — строка между
-    // лого и телефоном). На мобильном это значит: после открытия свежепоявившиеся пункты меню
-    // стоят в tab-порядке РАНЬШЕ toggle, и Tab вперёд от toggle уводит мимо меню в контент.
-    // Переносим фокус на первый пункт явно — как уже делает нативный <dialog> у квиза.
+    // nav в DOM раньше toggle, поэтому Tab от toggle уводит мимо открытого меню в контент —
+    // фокус переносим на первый пункт явно.
     if (open) {
       nav.querySelector<HTMLElement>('a, button')?.focus();
     }
   });
 }
 
-/** Открытие квиза лениво: quiz.ts (самый тяжёлый остров сайта) не должен попасть в eager-бандл. */
+/** Квиз лениво: самый тяжёлый остров сайта не должен попасть в eager-бандл. */
 function initQuizLauncher(): void {
   document.addEventListener('click', (event) => {
     const target = event.target;
@@ -71,15 +69,17 @@ function initQuizLauncher(): void {
     if (!trigger) return;
     event.preventDefault();
     const preset = trigger.getAttribute('data-preset') ?? undefined;
-    void import('./quiz')
-      .then((m) => m.openQuiz(preset))
-      .catch(() => {
-        // Сеть отвалилась ровно на этом чанке — квиз открыть нечем, но молчать нельзя (финальное
-        // ревью, MINOR 9). MessengerDock — eager и уже на странице: ведём туда явно.
+    // onRejected только у import: ошибка внутри openQuiz (регрессия разметки) не должна
+    // маскироваться под «сеть отвалилась» — пусть честно летит в консоль.
+    void import('./quiz').then(
+      (m) => m.openQuiz(preset),
+      () => {
+        // Чанк квиза не догрузился (сеть) — открыть нечем, ведём к живым ссылкам мессенджеров.
         const dock = document.getElementById('messenger-dock');
         dock?.scrollIntoView({ block: 'center' });
         dock?.querySelector<HTMLElement>('a')?.focus();
-      });
+      },
+    );
   });
 }
 

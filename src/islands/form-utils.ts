@@ -1,34 +1,25 @@
-// Хелперы, общие для короткой формы, формы подбора и квиза — вынесены сюда, чтобы не плодить
-// копии между islands/quiz.ts, islands/short-form.ts и islands/qualify-form.ts (Review Gate
-// Task 12: «нет дублирования логики квиза сверх необходимого»). Модуль опирается только на
-// quiz-core (сам без зависимостей) — безопасен и как eager-импорт short-form/qualify-form, и как
-// транзитивная зависимость ленивого quiz.ts (тот же принцип, что уже держит goals.ts общим между
-// eager app.ts и ленивым quiz.ts).
+// Хелперы, общие для короткой формы, формы подбора и квиза. Зависят только от quiz-core —
+// безопасны и в eager-бандле форм, и как транзитивная зависимость ленивого quiz.ts.
 import { validateContact, type Channel, type Utm } from './quiz-core';
 
 /**
- * Zero-width-символы (U+200B–U+200D, U+FEFF) — невидимы и матчятся JS-\s, но НЕ матчатся
- * серверным PCRE и не срезаются PHP trim() (см. isPhone в quiz-core.ts). Чистим на вводе/перед
- * отправкой, а не в quiz-core: там регексы — посимвольное зеркало lead.php, трогать нельзя.
+ * Zero-width-символы (U+200B–U+200D, U+FEFF) невидимы, но не матчятся серверным PCRE и не
+ * срезаются PHP trim(). Чистим на вводе, а не в quiz-core: там регексы — зеркало lead.php.
  */
 export function stripInvisible(v: string): string {
   return v.replace(/[\u200B-\u200D\uFEFF]/g, '');
 }
 
-/** Выбранный канал — из радиогруппы ChannelRadios; один чип всегда отмечен разметкой (первый —
- * по умолчанию), но на случай будущей правки верстки читаем без предположений и допускаем null. */
 export function readChannel(form: HTMLFormElement): Channel | null {
   const checked = form.querySelector<HTMLInputElement>('input[name="channel"]:checked');
   return (checked?.value as Channel | undefined) ?? null;
 }
 
-/** Проверки, общие для короткой формы и формы подбора (в квизе — свои, пошаговые: см. stepErrors
- * в quiz-core.ts — там ещё услуги/диагонали, здесь их нет). Пустоту имени проверяем по .trim()
- * (как stepErrors в quiz-core.ts), но саму строку не мутируем — вызывающая сторона передаёт и
- * отправляет только stripInvisible-очищенное значение, без .trim(): нативный trim() шире PHP
- * (снимает NBSP/BOM, которые PHP trim() не трогает), поэтому обрезка на клиенте не годится ни
- * для имени, ни для контакта — единообразие важнее лишнего пробела на конце (см. isPhone/phpTrim
- * в quiz-core.ts, там та же асимметрия разобрана для контакта). */
+/**
+ * Проверки короткой формы и формы подбора (в квизе — свои пошаговые stepErrors). Строки не
+ * тримятся намеренно: нативный trim() шире PHP-шного (см. phpTrim в quiz-core.ts), рассинхрон
+ * с сервером опаснее краевого пробела.
+ */
 export function contactFormErrors(
   name: string,
   channel: Channel | null,
@@ -44,8 +35,7 @@ export function contactFormErrors(
   return errors;
 }
 
-/** utm_v1 пишет app.ts частичным объектом (только реально пришедшие utm_*); хранилище может
- * отсутствовать или быть битым (приватный режим Safari, ручная правка) — тогда меток просто нет. */
+/** utm_v1 пишет app.ts частичным объектом; битое/недоступное хранилище — просто нет меток. */
 export function loadUtm(): Utm | null {
   let raw: string | null;
   try {

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { initialState, stepErrors, toPayload, validateContact, type QuizState, type Utm } from './quiz-core';
 
 // validateContact — зеркало серверных регексов из public/api/lead.php ($contactOk): расхождение
-// значит, что заявка проходит фронт и отбивается сервером — пользователь потерян. Кейсы ниже —
-// из брифа Task 10, плюс граничные значения диапазонов длины (главный риск при "посимвольном" копировании).
+// значит, что заявка проходит фронт и отбивается сервером — пользователь потерян. В кейсах —
+// и граничные значения диапазонов длины: главный риск при посимвольном копировании.
 describe('validateContact: telegram', () => {
   it('@ник из 4+ символов — валиден', () => {
     expect(validateContact('telegram', '@ivan_t')).toBe(true);
@@ -70,7 +70,7 @@ describe('validateContact: whatsapp/max/call — только телефон', (
 
 // lead.php перед сверкой с регексом делает trim($contact) ($s = fn($k,$max) => mb_substr(trim(...))).
 // Если фронт валидирует СЫРОЙ contact без такого же trim, краевой пробел по-разному меняет длину
-// строки на фронте и на сервере — заявка молча проходит фронт и отбивается сервером (Review Gate).
+// строки на фронте и на сервере — заявка молча проходит фронт и отбивается сервером.
 describe('validateContact: зеркало PHP trim() перед проверкой', () => {
   it('9 цифр + завершающий пробел: сервер после trim() видит 9 цифр — невалиден', () => {
     expect(validateContact('call', '916123456 ')).toBe(false);
@@ -193,7 +193,7 @@ describe('initialState', () => {
 });
 
 // Локальная форма payload — только то, что проверяют тесты (полная схема — ТЗ §6.4 / lead-api.spec.ts).
-// toPayload по сигнатуре брифа возвращает `object`; для type-safe чтения полей в тесте кастуем
+// toPayload возвращает `object`; для type-safe чтения полей в тесте кастуем
 // в этот узкий интерфейс (не any, не двойной каст: object → более узкий тип — валидное сужение).
 interface QuizPayload {
   form_type: string;

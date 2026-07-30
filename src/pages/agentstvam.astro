@@ -4,6 +4,7 @@ import CtaBlock from '../components/CtaBlock.astro';
 import { SITE } from '../config/site';
 import { AGENCY_LINK, HOME_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
+import { boxClass, primaryButton, secondaryButton } from '../lib/ui';
 
 // Страница-дифференциатор по ТЗ §5.6 — короткая, без карточек-«экранов» и без цен:
 // агентство выбирает подрядчика по документам, скорости и тому, кто именно приедет
@@ -38,11 +39,6 @@ const blocks = [
   },
 ];
 
-const boxClass = 'rounded-box border border-line bg-surface';
-const primaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
-const secondaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
 ---
 
 <Base title={title} description={description}>
@@ -85,6 +81,7 @@ const secondaryButton =
 
       <div
         id="white-label"
+        data-screen-in
         class="screen-on rounded-box flex min-w-0 flex-col justify-between gap-6 p-6 sm:p-8 md:col-span-5"
       >
         <p class="font-mono text-[11.5px] tracking-[0.14em] text-white/75 uppercase">

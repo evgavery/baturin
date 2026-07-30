@@ -1,7 +1,6 @@
-// Квиз «Получить смету» — поведение модалки (Task 11). Вся валидация/сборка payload — через
-// quiz-core (Task 10), этот модуль только: рендерит state в DOM, слушает ввод, читает/пишет
-// sessionStorage и шлёт запрос. Грузится лениво: app.ts делает dynamic import('./quiz') по
-// первому клику на [data-quiz-open], поэтому этот код не должен попасть в eager-бандл.
+// Квиз «Получить смету»: рендер state в DOM, ввод, sessionStorage, отправка. Валидация и
+// payload — в quiz-core. Грузится лениво по первому клику на [data-quiz-open] (см. app.ts) —
+// в eager-бандл попадать не должен.
 import { loadUtm, stripInvisible } from './form-utils';
 import { reachGoal } from './goals';
 import {
@@ -16,13 +15,14 @@ import {
 
 const STATE_KEY = 'quiz_state_v1';
 
+// Неразрывные пробелы — как в серверной разметке QuizModal.astro: лейбл в узкой колонке
+// у крестика не должен переноситься после первого же render().
 const STEP_LABELS: Record<1 | 2 | 3, string> = {
   1: 'ШАГ 1 ИЗ 3 · ОБОРУДОВАНИЕ',
   2: 'ШАГ 2 ИЗ 3 · ДАТЫ И ПЛОЩАДКА',
   3: 'ШАГ 3 ИЗ 3 · КОНТАКТ',
 };
 
-/** Плейсхолдер и клавиатура контакта под канал — дословно из брифа Task 11. */
 const CHANNEL_UX: Record<Channel, { placeholder: string; inputMode: 'text' | 'tel' | 'email' }> = {
   telegram: { placeholder: '@ник или телефон', inputMode: 'text' },
   whatsapp: { placeholder: '+7 …', inputMode: 'tel' },
@@ -32,7 +32,6 @@ const CHANNEL_UX: Record<Channel, { placeholder: string; inputMode: 'text' | 'te
 };
 const CHANNEL_UX_DEFAULT = { placeholder: 'Телефон, ник или e-mail', inputMode: 'text' as const };
 
-/** Человекочитаемое завершение фразы «Смета придёт …» / отдельная фраза для звонка (ТЗ §6.1). */
 function successText(channel: Channel | null): string {
   switch (channel) {
     case 'telegram':
@@ -49,7 +48,7 @@ function successText(channel: Channel | null): string {
   }
 }
 
-/** sessionStorage недоступен в приватном режиме Safari — тогда просто работаем без него (как в app.ts). */
+/** sessionStorage недоступен в приватном режиме Safari — работаем без него. */
 function readStore(key: string): string | null {
   try {
     return sessionStorage.getItem(key);
@@ -80,11 +79,25 @@ function isStringArray(v: unknown): v is string[] {
   return Array.isArray(v) && v.every((item) => typeof item === 'string');
 }
 
-// Реальные значения Channel/ClientType — те же списки, что рендерят ChannelRadios.astro и
-// CLIENT_TYPE_OPTIONS в QuizModal.astro. Держим их здесь, а не импортируем из quiz-core: там это
-// типы (стираются в рантайме), а не значения, — whitelist обязан жить рядом с проверкой.
-const CHANNEL_VALUES: readonly Channel[] = ['telegram', 'whatsapp', 'max', 'email', 'call'];
-const CLIENT_TYPE_VALUES: readonly ClientType[] = ['agency', 'organizer', 'company', 'other'];
+// Whitelist-значения как данные: в quiz-core Channel/ClientType — только типы, в рантайме их
+// нет. satisfies Record<…> держит списки полными: расширили тип — компилятор требует пополнить
+// запись, иначе сохранённое состояние с новым значением молча отбрасывалось бы.
+const CHANNEL_VALUES = Object.keys({
+  telegram: 1,
+  whatsapp: 1,
+  max: 1,
+  email: 1,
+  call: 1,
+} satisfies Record<Channel, 1>) as readonly Channel[];
+// Без 'complex': в квизе этой услуги нет (только в форме подбора), полнота тут не нужна.
+const SERVICE_VALUES = ['plasma', 'led', 'touch', 'stream', 'consult'] as const satisfies readonly ServiceKey[];
+const CLIENT_TYPE_VALUES = Object.keys({
+  agency: 1,
+  organizer: 1,
+  company: 1,
+  other: 1,
+} satisfies Record<ClientType, 1>) as readonly ClientType[];
+const DIAGONAL_VALUES = ['55', '75', '86', '98', 'other'] as const;
 
 function isChannel(v: unknown): v is Channel {
   return typeof v === 'string' && (CHANNEL_VALUES as readonly string[]).includes(v);
@@ -95,25 +108,23 @@ function isClientType(v: unknown): v is ClientType {
 }
 
 /**
- * Сырые данные из sessionStorage/data-preset могут быть чем угодно — старая версия формата,
- * ручная правка стораджа, опечатка в preset на странице (например `{"services":"plasma"}` —
- * строка вместо массива). initialState() слепо спредит их поверх дефолтов, так что несовпадение
- * ФОРМЫ поля не падает сразу на open, а роняет первое же взаимодействие: например,
- * `state.services.filter(...)` в handleInput бросает, если services — строка, а не массив.
- * Проверяем форму (тип) каждого поля по QuizState; для channel/clientType — ещё и значение по
- * whitelist реальных enum-значений (финальное ревью, IMPORTANT 3): произвольная строка вроде
- * `{"channel":"pigeon"}` раньше проходила проверку typeof === 'string' и долетала до
- * `CHANNEL_UX[channel]` в applyChannelUx() — обращение к несуществующему ключу объекта даёт
- * `undefined`, а `.placeholder` на нём бросает TypeError ПРЯМО в render(), которая выполняется до
- * showModal(); если такое значение осело в sessionStorage, квиз переставал открываться вообще,
- * пока сторадж не очистят вручную. Всё, что не подходит по типу/значению, просто отбрасываем
- * (остаётся дефолт из initialState), без попытки угадать/починить.
+ * Сырое из sessionStorage/data-preset спредится поверх дефолтов, поэтому неверная форма поля
+ * роняет не open, а первое взаимодействие (например, services-строка ломает .filter), а чужое
+ * значение channel добиралось бы до CHANNEL_UX[channel] и роняло render() ещё до showModal() —
+ * с испорченным стораджем квиз не открывался бы вовсе. Всё неподходящее по типу/значению
+ * отбрасываем до дефолта, не пытаясь чинить.
  */
 function sanitizePartialState(raw: Record<string, unknown>): Partial<QuizState> {
   const out: Partial<QuizState> = {};
   if (raw.step === 1 || raw.step === 2 || raw.step === 3) out.step = raw.step;
-  if (isStringArray(raw.services)) out.services = raw.services as ServiceKey[];
-  if (isStringArray(raw.diagonals)) out.diagonals = raw.diagonals;
+  if (isStringArray(raw.services)) {
+    out.services = raw.services.filter((v): v is ServiceKey =>
+      (SERVICE_VALUES as readonly string[]).includes(v),
+    );
+  }
+  if (isStringArray(raw.diagonals)) {
+    out.diagonals = raw.diagonals.filter((v) => (DIAGONAL_VALUES as readonly string[]).includes(v));
+  }
   if (typeof raw.qty === 'number' && Number.isFinite(raw.qty)) out.qty = raw.qty;
   if (raw.ledW === null || (typeof raw.ledW === 'number' && Number.isFinite(raw.ledW))) {
     out.ledW = raw.ledW as number | null;
@@ -137,7 +148,6 @@ function sanitizePartialState(raw: Record<string, unknown>): Partial<QuizState> 
   return out;
 }
 
-/** Сохранённое состояние из sessionStorage — как попало (кривой JSON/чужой тип не должны падать). */
 function loadSavedState(): Partial<QuizState> {
   const raw = readStore(STATE_KEY);
   if (!raw) return {};
@@ -149,7 +159,6 @@ function loadSavedState(): Partial<QuizState> {
   }
 }
 
-/** data-preset — JSON-строка с карточки/калькулятора; кривой атрибут не должен ронять страницу. */
 function parsePreset(presetJson: string | undefined): Partial<QuizState> {
   if (!presetJson) return {};
   try {
@@ -205,9 +214,8 @@ let refs: Refs;
 let state: QuizState = initialState();
 let lastFocused: HTMLElement | null = null;
 let submitting = false;
-// Растёт на каждую новую отправку И на каждое openQuiz(): если пользователь успел закрыть квиз,
-// открыть заново (новая сессия) и не отправлял ничего ещё раз, ответ СТАРОГО fetch не должен
-// подменить экран уже другой, текущей сессии — сверяем токен перед тем, как трогать DOM.
+// Растёт на каждую отправку и на каждое openQuiz(): ответ fetch из прежней сессии квиза
+// не должен подменить экран текущей — токен сверяется перед любым касанием DOM.
 let submitToken = 0;
 
 function queryRefs(): Refs {
@@ -262,10 +270,8 @@ function applyChannelUx(channel: Channel | null): void {
   refs.contactInput.inputMode = cfg.inputMode;
 }
 
-// [data-errors] всегда в DOM (без hidden — см. QuizModal.astro): live-регион, появившийся ОДНО-
-// ВРЕМЕННО с текстом, скринридеры стабильно не анонсируют — подписка на регион требует, чтобы он
-// уже существовал в дереве ДО изменения содержимого. Управляем только textContent; '' = нет
-// ошибки, пустая строка визуально схлопывается через [data-errors]:empty в <style>.
+// [data-errors] всегда в DOM: live-регион, появившийся одновременно с текстом, скринридеры
+// не анонсируют. Управляем только textContent; пустая строка схлопывается через :empty.
 function showErrors(errors: string[]): void {
   refs.errorsBox.textContent = errors.join('\n');
 }
@@ -274,7 +280,7 @@ function hideErrors(): void {
   refs.errorsBox.textContent = '';
 }
 
-/** Полный рендер текущего state в DOM: видимость шагов, прогресс, значения всех полей. */
+/** Полный рендер state в DOM: видимость шагов, прогресс, значения всех полей. */
 function render(): void {
   refs.stepLabel.textContent = STEP_LABELS[state.step];
   refs.progress.setAttribute('aria-valuenow', String(state.step));
@@ -287,7 +293,6 @@ function render(): void {
   refs.steps[2].hidden = state.step !== 2;
   refs.steps[3].hidden = state.step !== 3;
 
-  // Шаг 1.
   refs.form.querySelectorAll<HTMLInputElement>('input[name="services"]').forEach((cb) => {
     cb.checked = state.services.includes(cb.value as ServiceKey);
   });
@@ -296,13 +301,12 @@ function render(): void {
   refs.form.querySelectorAll<HTMLInputElement>('input[name="diagonals"]').forEach((cb) => {
     cb.checked = state.diagonals.includes(cb.value);
   });
-  refs.qtyInput.value = String(state.qty);
+  refs.qtyInput.value = state.qty > 0 ? String(state.qty) : '';
   refs.ledWInput.value = state.ledW !== null ? String(state.ledW) : '';
   refs.ledHInput.value = state.ledH !== null ? String(state.ledH) : '';
   refs.outdoorInput.checked = state.outdoor;
 
-  // Шаг 2. «Ещё не знаю» — переходное UI-состояние без своего поля в QuizState, отражает
-  // только пустое значение даты; чекбокс — разовое действие «очистить дату», не хранится.
+  // Чекбокс «Ещё не знаю дату» — разовое действие «очистить дату», в QuizState не хранится.
   refs.dateInput.value = state.date;
   refs.dateInput.disabled = false;
   refs.dateUnknown.checked = false;
@@ -312,7 +316,6 @@ function render(): void {
   refs.venueInput.value = state.venue;
   refs.commentInput.value = state.comment;
 
-  // Шаг 3.
   refs.nameInput.value = state.name;
   refs.companyInput.value = state.company;
   refs.clientTypeSelect.value = state.clientType ?? '';
@@ -333,10 +336,8 @@ function showResultView(kind: 'success' | 'error'): void {
   refs.formView.hidden = true;
   refs.successScreen.hidden = kind !== 'success';
   refs.errorScreen.hidden = kind !== 'error';
-  // setSubmitDisabled(true) перед отправкой дизейблит сфокусированную кнопку «Далее»/«Получить
-  // смету», а formView.hidden прячет её контейнер целиком — без явного переноса фокус проваливается
-  // на <body>, и SR-пользователь остаётся «нигде» после сабмита. Успех — на текст (tabindex=-1,
-  // просто сообщить результат), ошибка — сразу на «Попробовать ещё раз» (следующее действие рядом).
+  // Кнопка сабмита была сфокусирована и только что спряталась вместе с formView — без явного
+  // переноса фокус падает на <body>. Успех — на текст (tabindex=-1), ошибка — на повтор.
   if (kind === 'success') {
     refs.successText.focus();
   } else {
@@ -366,6 +367,8 @@ async function submit(): Promise<void> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      // Зависший на shared-хостинге запрос не должен вечно держать кнопки задизейбленными.
+      signal: AbortSignal.timeout(15000),
     });
     const data: unknown = await res.json().catch(() => null);
     const ok =
@@ -374,19 +377,22 @@ async function submit(): Promise<void> {
       data !== null &&
       (data as { ok?: unknown }).ok === true;
 
-    // Пока ждали ответ, квиз могли закрыть и открыть заново (новая сессия, token уже другой) —
-    // тогда этот ответ больше не про то, что сейчас на экране, трогать DOM нельзя.
+    // Заявка принята сервером — цель и очистка стораджа не зависят от того, что сейчас на
+    // экране: иначе при закрытом-переоткрытом квизе конверсия не считается, а сохранённый
+    // state провоцирует повторную отправку дубля.
+    if (ok) {
+      reachGoal('lead_quiz');
+      removeStore(STATE_KEY);
+    }
+
+    // Пока ждали ответ, квиз могли закрыть и открыть заново — чужой ответ DOM не трогает.
     if (token !== submitToken) return;
 
-    // Разблокируем кнопки ДО showResultView, а не в finally ПОСЛЕ него: на error-экране
-    // showResultView переводит фокус на retryBtn (MINOR 3), а .focus() на ещё задизейбленной
-    // кнопке — no-op в браузере (фокус тогда молча остаётся нигде, ровно тот баг, что чиним).
+    // Разблокировать до showResultView: .focus() на задизейбленном retryBtn — no-op.
     submitting = false;
     setSubmitDisabled(false);
 
     if (ok) {
-      reachGoal('lead_quiz');
-      removeStore(STATE_KEY);
       refs.successText.textContent = successText(state.channel);
       showResultView('success');
     } else {
@@ -424,7 +430,6 @@ function goBack(): void {
   render();
 }
 
-/** Делегированный обработчик всех полей формы (кроме служебного data-date-unknown). */
 function handleInput(event: Event): void {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
@@ -450,8 +455,10 @@ function handleInput(event: Event): void {
       break;
     }
     case 'qty': {
+      // Пустое/нечисловое поле — 0, а не молчаливая 1: stepErrors увидит qty < 1 и попросит
+      // заполнить, вместо того чтобы отправить не то, что на экране.
       const n = (target as HTMLInputElement).valueAsNumber;
-      state.qty = Number.isFinite(n) ? n : 1;
+      state.qty = Number.isFinite(n) ? n : 0;
       break;
     }
     case 'ledW':
@@ -515,8 +522,7 @@ function handleInput(event: Event): void {
 
 function wireEvents(): void {
   refs.form.addEventListener('input', handleInput);
-  // Ни одна из кнопок формы не type=submit, но это дешёвая страховка от неявной отправки формы
-  // (Enter в поле) — без неё она перезагрузила бы страницу и уничтожила состояние квиза.
+  // Страховка от неявной отправки (Enter в поле) — она перезагрузила бы страницу.
   refs.form.addEventListener('submit', (event) => event.preventDefault());
 
   refs.dateUnknown.addEventListener('change', () => {
@@ -537,15 +543,9 @@ function wireEvents(): void {
   });
   refs.closeBtn.addEventListener('click', () => refs.dialog.close());
 
-  // Клик по затемнению закрывает диалог. Проверять event.target === dialog недостаточно: клик по
-  // ЛЮБОЙ точке самого dialog (включая его же padding вокруг контента, а не только ::backdrop)
-  // тоже даёт target === dialog — тогда клик рядом с заголовком закрывал бы квиз. Сравниваем
-  // координаты клика с реальным прямоугольником панели: снаружи нашли — точно затемнение.
-  //
-  // Одних координат click недостаточно: mousedown внутри поля (выделить текст) → драг мимо
-  // панели → mouseup на фоне — это тоже click с координатами снаружи, но пользователь просто
-  // тянул выделение, а не просил закрыть квиз. Закрываем только если СНАРУЖИ были и pointerdown,
-  // и сам click — то есть весь жест начался и закончился на затемнении.
+  // Закрытие по затемнению. target === dialog даёт и клик по padding панели, поэтому сверяем
+  // координаты с прямоугольником панели; а чтобы драг-выделение текста, отпущенное на фоне,
+  // не закрывало квиз, снаружи должны быть и pointerdown, и сам click.
   let pointerDownOutsidePanel = false;
   const isOutsidePanel = (x: number, y: number): boolean => {
     const rect = refs.dialog.getBoundingClientRect();
@@ -560,8 +560,7 @@ function wireEvents(): void {
     }
   });
 
-  // Esc закрывает dialog нативно — здесь только пост-обработка: state уже сохранён на каждый
-  // input, так что достаточно вернуть фокус на кнопку-открывашку.
+  // Esc закрывает dialog нативно; state уже сохранён на каждый input — осталось вернуть фокус.
   refs.dialog.addEventListener('close', () => {
     lastFocused?.focus();
     lastFocused = null;
@@ -575,19 +574,20 @@ function ensureInit(): void {
   initialized = true;
 }
 
-/** Открывает квиз: preset (клик по карточке/калькулятору) побеждает над сохранённым состоянием. */
+/** Открывает квиз: preset с карточки/калькулятора побеждает сохранённое состояние. */
 export function openQuiz(presetJson?: string): void {
   ensureInit();
 
-  // Новая сессия квиза: любой не долетевший ответ от ПРЕЖНЕЙ отправки (закрыли посреди fetch)
-  // не должен позже подменить этот экран — и кнопки не должны остаться заблокированы её тенью.
+  // Новая сессия: инвалидировать не долетевший fetch прежней и снять её дизейбл с кнопок.
   submitToken += 1;
   submitting = false;
   setSubmitDisabled(false);
 
   const saved = loadSavedState();
   const preset = parsePreset(presetJson);
-  state = initialState({ ...saved, ...preset });
+  // Пресет меняет оборудование — показываем шаг 1, а не сохранённый шаг: иначе клик по
+  // карточке 75″ открывал бы сразу «Куда прислать смету?» с невидимо подменённым составом.
+  state = initialState({ ...saved, ...preset, ...(presetJson ? { step: 1 } : {}) });
 
   lastFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   showFormView();

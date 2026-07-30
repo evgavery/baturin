@@ -3,7 +3,9 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import CtaBlock from '../components/CtaBlock.astro';
 import { SITE } from '../config/site';
 import { CONTACTS_LINK, HOME_LINK } from '../data/nav';
+import { MESSENGER_LINKS } from '../data/messengers';
 import Base from '../layouts/Base.astro';
+import { boxClass } from '../lib/ui';
 
 // ТЗ §5.7: телефон, e-mail, мессенджеры, режим и зона работы, реквизиты. Без карт и
 // виджетов — карты нет вообще (шапка/подвал уже дают эти контакты, здесь — крупно
@@ -13,12 +15,6 @@ const description =
   'Телефон, e-mail, Telegram, WhatsApp и MAX. Работаем в Москве и МО, заявки принимаем круглосуточно, смету пришлём за 30 минут.';
 
 const consultPreset = JSON.stringify({ services: ['consult'] });
-
-const messengers = [
-  { href: SITE.tgLink, goal: 'click_tg', label: 'Telegram' },
-  { href: SITE.waLink, goal: 'click_wa', label: 'WhatsApp' },
-  { href: SITE.maxLink, goal: 'click_max', label: 'MAX' },
-];
 
 const details = [
   {
@@ -41,7 +37,6 @@ const details = [
   },
 ];
 
-const boxClass = 'rounded-box border border-line bg-surface';
 // Ссылки лежат на «включённом» (screen-on) боксе — своя, более светлая палитра границ.
 const messengerLink =
   'flex min-h-[48px] items-center justify-between gap-3 rounded-sm border border-white/20 bg-white/5 px-4 text-[15px] font-medium text-white transition-colors duration-200 hover:border-white/40';
@@ -91,6 +86,7 @@ const messengerLink =
 
       <div
         id="messengers"
+        data-screen-in
         class="screen-on rounded-box flex min-w-0 flex-col justify-between gap-5 p-6 sm:p-8 md:col-span-5"
       >
         <div>
@@ -103,7 +99,7 @@ const messengerLink =
         </div>
         <div class="flex flex-col gap-2.5">
           {
-            messengers.map((item) => (
+            MESSENGER_LINKS.map((item) => (
               <a
                 href={item.href}
                 target="_blank"
@@ -120,8 +116,10 @@ const messengerLink =
       </div>
     </section>
 
-    {/* Режим, зона работы и реквизиты — каждый факт прямо из SITE, без ручного ввода. */}
-    <section class="cv-auto mt-20 grid gap-bento sm:grid-cols-3">
+    {/* Режим, зона работы и реквизиты — каждый факт прямо из SITE, без ручного ввода.
+       Без cv-auto: страница короткая, секция попадает в первый вьюпорт, и 800px-плейсхолдер
+       intrinsic-size при первом рендере схлопывался бы со сдвигом CTA (CLS 0.11). */}
+    <section class="mt-20 grid gap-bento sm:grid-cols-3">
       {
         details.map((item) => (
           <div id={item.id} class={`${boxClass} p-6`}>

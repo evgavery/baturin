@@ -7,7 +7,7 @@ const links = [HOME_LINK, ...DIRECTION_LINKS, CONTACTS_LINK];
 ---
 
 <Base
-  title={`Страница не найдена — ${SITE.brandName}`}
+  title={`Страница не найдена | ${SITE.brandName}`}
   description="Такой страницы на сайте нет. Перейдите в нужный раздел или напишите нам — подберём оборудование и пришлём смету."
   noindex
 >
@@ -23,7 +23,7 @@ const links = [HOME_LINK, ...DIRECTION_LINKS, CONTACTS_LINK];
       если нужна смета, позвоните или напишите в&nbsp;мессенджер.
     </p>
 
-    <ul class="grid grid-cols-1 gap-bento sm:grid-cols-2 lg:grid-cols-3">
+    <ul role="list" class="grid grid-cols-1 gap-bento sm:grid-cols-2 lg:grid-cols-3">
       {
         links.map((item) => (
           <li>

@@ -20,8 +20,11 @@ for (const p of packs) {
 
   const files = readdirSync(dirs[0]).filter((f) => /-(cyrillic|latin)-wght-normal\.woff2$/.test(f));
 
-  if (!files.length) {
-    console.error(`нет variable-файлов (-{cyrillic,latin}-wght-normal.woff2) в пакете: ${p}`);
+  // Нужны оба сабсета: global.css объявляет @font-face и на cyrillic, и на latin —
+  // пропавший файл молча уронил бы половину алфавита на fallback-шрифт.
+  const missing = ['cyrillic', 'latin'].filter((s) => !files.some((f) => f.includes(`-${s}-`)));
+  if (missing.length) {
+    console.error(`в пакете ${p} нет сабсетов: ${missing.join(', ')} (-wght-normal.woff2)`);
     process.exitCode = 1;
     continue;
   }

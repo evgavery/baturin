@@ -8,6 +8,7 @@ import { FAQ_TOUCH } from '../data/faq';
 import { HOME_LINK, TOUCH_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
 import { rub } from '../lib/format';
+import { boxClass, primaryButton, secondaryButton } from '../lib/ui';
 
 // Страница направления по ТЗ §5.4. Тач-панели — «железо», как плазмы и LED: три позиции
 // с ценами, карточки + Product-разметка на каждую. Цена в title — от SITE.prices.touch
@@ -62,11 +63,6 @@ const positions = SITE.prices.touchTable.map((row, index) => ({
   note: POSITION_NOTES[index],
 }));
 
-const boxClass = 'rounded-box border border-line bg-surface';
-const primaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
-const secondaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
 const cardButton =
   'mt-5 flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
 ---
@@ -113,8 +109,12 @@ const cardButton =
 
       <div class="grid min-w-0 gap-bento md:col-span-4">
         {
-          facts.map((fact) => (
-            <div class={`${boxClass} p-6`}>
+          facts.map((fact, index) => (
+            <div
+              data-screen-in
+              style={`animation-delay:${120 * (index + 1)}ms`}
+              class={`${boxClass} p-6`}
+            >
               <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">
                 {fact.label}
               </p>
@@ -179,7 +179,7 @@ const cardButton =
     <section id="content" class="cv-auto mt-20 grid gap-bento md:grid-cols-12">
       <div class={`min-w-0 md:col-span-5 ${boxClass} p-6 sm:p-8`}>
         <h2 class="text-[20px] font-semibold text-screen">Что входит в аренду</h2>
-        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+        <ol role="list" class="mt-5 flex flex-col gap-3 text-[15px] text-text">
           {
             SITE.included.map((item, index) => (
               <li class="flex gap-3">

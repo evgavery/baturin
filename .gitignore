@@ -12,3 +12,6 @@ tests/.tmp/
 .tmp-lh.json
 test-results/
 playwright-report/
+
+# Артефакты браузерных сессий playwright-cli
+.playwright-cli/

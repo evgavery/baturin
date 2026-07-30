@@ -12,6 +12,7 @@ import { DIAGONALS, type Diagonal } from '../../data/diagonals';
 import { HOME_LINK, PLASMA_LINK, diagonalHref } from '../../data/nav';
 import Base from '../../layouts/Base.astro';
 import { rub } from '../../lib/format';
+import { boxClass } from '../../lib/ui';
 
 export const getStaticPaths = (() =>
   DIAGONALS.map((diagonal) => ({
@@ -102,7 +103,6 @@ const preset = JSON.stringify({ services: ['plasma'], diagonals: [d.size] });
 const priceFootnote =
   'Цена за одну панель. Первый день — полная стоимость, каждый следующий дешевле; доставка в пределах МКАД, монтаж и стойка входят в цену. Выезд за МКАД и ночные работы считаем отдельно.';
 
-const boxClass = 'rounded-box border border-line bg-surface';
 ---
 
 <Base title={title} description={description}>
@@ -116,7 +116,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
     />
 
     <section id="hero" class="mt-4 grid gap-bento md:grid-cols-12">
-      <div class={`card-slot flex min-w-0 flex-col ${boxClass} p-6 sm:p-8 md:col-span-7`}>
+      <div data-screen-in class={`card-slot flex min-w-0 flex-col ${boxClass} p-6 sm:p-8 md:col-span-7`}>
         <p class="font-mono text-[11.5px] tracking-[0.14em] text-dim uppercase">
           Плазменная панель · 16:9
         </p>
@@ -141,7 +141,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
             от {rub(d.prices.d1)}<span class="text-[13px] text-dim"> / сутки</span>
           </p>
         </div>
-        <div class={`flex flex-wrap gap-3 ${boxClass} p-6`}>
+        <div data-screen-in style="animation-delay:120ms" class={`flex flex-wrap gap-3 ${boxClass} p-6`}>
           <button
             type="button"
             data-quiz-open
@@ -177,7 +177,7 @@ const boxClass = 'rounded-box border border-line bg-surface';
 
       <div id="included" class={`min-w-0 md:col-span-5 ${boxClass} p-6 sm:p-8`}>
         <h2 class="text-[20px] font-semibold text-screen">Что включено</h2>
-        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+        <ol role="list" class="mt-5 flex flex-col gap-3 text-[15px] text-text">
           {
             SITE.included.map((item, index) => (
               <li class="flex gap-3">
@@ -202,13 +202,12 @@ const boxClass = 'rounded-box border border-line bg-surface';
       <MountMethods />
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility намеренно не
-        ставим: внутри [data-seo-text], а его innerText браузер отдаёт пустым, пока секция вне
-        вьюпорта не отрендерена — падают e2e (plazmy.spec.ts). */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). Без cv-auto: у нерендеренной
+        секции innerText пуст — падают e2e-проверки [data-seo-text]. */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда берут {d.size}&nbsp;дюймов</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
-        <ul class="mb-7 grid gap-4 border-b border-line pb-7 sm:grid-cols-3">
+        <ul role="list" class="mb-7 grid gap-4 border-b border-line pb-7 sm:grid-cols-3">
           {
             d.scenarios.map((scenario, index) => (
               <li class="flex gap-3 text-[15px] text-screen">

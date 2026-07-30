@@ -4,6 +4,7 @@ import CtaBlock from '../components/CtaBlock.astro';
 import { SITE } from '../config/site';
 import { HOME_LINK, POLICY_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
+import { boxClass } from '../lib/ui';
 
 // ТЗ §5.8: типовой текст по 152-ФЗ, 7 разделов (см. ниже). Состав персональных данных
 // в разделе 3 сознательно совпадает с полями реальных форм квиза и формы подбора
@@ -15,7 +16,6 @@ import Base from '../layouts/Base.astro';
 const title = `Политика конфиденциальности | ${SITE.brandName}`;
 const description = `Как ${SITE.brandName} обрабатывает персональные данные: какие данные собираем, для чего и куда передаём, как реализовать права субъекта.`;
 
-const boxClass = 'rounded-box border border-line bg-surface';
 const heading = 'mt-10 text-[19px] font-semibold text-screen first:mt-0 sm:text-[20px]';
 const paragraph = 'mt-4 text-[16.5px] leading-[1.75] text-text';
 const list = 'mt-4 flex flex-col gap-2.5 text-[16.5px] leading-[1.6] text-text';
@@ -81,7 +81,7 @@ const list = 'mt-4 flex flex-col gap-2.5 text-[16.5px] leading-[1.6] text-text';
           самостоятельно при заполнении формы подбора оборудования, квиза «Получить смету» или
           короткой формы заявки на Сайте:
         </p>
-        <ul class={list}>
+        <ul role="list" class={list}>
           <li>— имя;</li>
           <li>
             — номер телефона и/или ник в мессенджере (Telegram, WhatsApp, MAX) — в зависимости
@@ -99,7 +99,7 @@ const list = 'mt-4 flex flex-col gap-2.5 text-[16.5px] leading-[1.6] text-text';
 
         <h2 class={heading}>4. Цели и правовые основания обработки</h2>
         <p class={paragraph}>Персональные данные обрабатываются в целях:</p>
-        <ul class={list}>
+        <ul role="list" class={list}>
           <li>— обработки заявки и подготовки сметы на аренду оборудования;</li>
           <li>— связи с пользователем для уточнения деталей заказа;</li>
           <li>— заключения и исполнения договора, если заявка переходит в сделку;</li>
@@ -119,7 +119,7 @@ const list = 'mt-4 flex flex-col gap-2.5 text-[16.5px] leading-[1.6] text-text';
           удаляются или обезличиваются.
         </p>
         <p class={paragraph}>При отправке формы данные передаются:</p>
-        <ul class={list}>
+        <ul role="list" class={list}>
           <li>
             — в Telegram через Telegram Bot API — для уведомления Оператора о новой заявке;
           </li>
@@ -153,7 +153,7 @@ const list = 'mt-4 flex flex-col gap-2.5 text-[16.5px] leading-[1.6] text-text';
 
         <h2 class={heading}>7. Права субъекта персональных данных</h2>
         <p class={paragraph}>В соответствии со ст.&nbsp;14 152-ФЗ пользователь вправе:</p>
-        <ul class={list}>
+        <ul role="list" class={list}>
           <li>— получить информацию, касающуюся обработки его персональных данных;</li>
           <li>
             — требовать уточнения, блокирования или уничтожения персональных данных, если они

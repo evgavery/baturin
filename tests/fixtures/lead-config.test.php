@@ -11,7 +11,7 @@ return [
   'tg_bot_token' => '', // не используется: test_mode=true не доходит до отправки в Telegram
   'tg_chat_id' => '',
   'lead_email' => 'leads@example.ru',
-  'allowed_origin' => 'http://127.0.0.1:4321', // локальный стенд, playwright.config.ts
+  'allowed_origin' => 'http://127.0.0.1:4381', // локальный стенд, playwright.config.ts
   'rate_limit_max' => 5,
   // Секунды, не час: кейс лимита шлёт 6 POST мгновенно и должен словить 429 в пределах теста,
   // а обычные отправки форм/квиза в других спеках разнесены по времени и в это окно не попадают.

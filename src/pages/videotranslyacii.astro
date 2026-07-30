@@ -8,6 +8,7 @@ import { FAQ_STREAM } from '../data/faq';
 import { HOME_LINK, STREAM_LINK } from '../data/nav';
 import Base from '../layouts/Base.astro';
 import { rub } from '../lib/format';
+import { boxClass, primaryButton, secondaryButton } from '../lib/ui';
 
 // Страница направления по ТЗ §5.5 — это услуга, а не железо, поэтому структура другая:
 // состав услуги вместо характеристик, пакеты вместо диагоналей, процесс работы вместо
@@ -88,11 +89,6 @@ const process = [
   },
 ];
 
-const boxClass = 'rounded-box border border-line bg-surface';
-const primaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
-const secondaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
 const cardButton =
   'mt-5 flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-6 text-[14.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong';
 ---
@@ -139,8 +135,12 @@ const cardButton =
 
       <div class="grid min-w-0 gap-bento md:col-span-4">
         {
-          facts.map((fact) => (
-            <div class={`${boxClass} p-6`}>
+          facts.map((fact, index) => (
+            <div
+              data-screen-in
+              style={`animation-delay:${120 * (index + 1)}ms`}
+              class={`${boxClass} p-6`}
+            >
               <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">
                 {fact.label}
               </p>
@@ -196,7 +196,7 @@ const cardButton =
     {/* Процесс работы (ТЗ §5.5): бриф → техплан → трансляция → запись. */}
     <section id="process" class="cv-auto mt-20">
       <h2 class="section-title mb-6">Как проходит работа</h2>
-      <ol class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
+      <ol role="list" class="grid gap-bento sm:grid-cols-2 lg:grid-cols-4">
         {
           process.map((step) => (
             <li class={`${boxClass} p-6`}>

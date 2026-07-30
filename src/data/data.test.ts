@@ -11,10 +11,16 @@ describe('данные', () => {
   it('цены диагоналей берутся из SITE (один источник)', () => {
     for (const d of DIAGONALS) expect(d.prices).toBe(SITE.prices.plasma[d.size]);
   });
+  // Пины значений-заглушек — намеренный трипвайр: когда придут реальные данные клиента,
+  // эти тесты обязаны упасть и напомнить пройти чек-лист запуска (README).
   it('рыночные ориентиры ТЗ §8.1', () => {
     expect(SITE.prices.plasma['55']).toEqual({ d1: 3500, d2: 5500, d3: 7500 });
     expect(SITE.prices.plasma['98'].d1).toBe(40000);
     expect(SITE.prices.ledM2).toBe(3500);
+  });
+  it('цены «от» совпадают с минимумом своих таблиц', () => {
+    expect(SITE.prices.touch).toBe(Math.min(...SITE.prices.touchTable.map((r) => r.d1)));
+    expect(SITE.prices.stream).toBe(Math.min(...SITE.prices.streamTable.map((r) => r.d1)));
   });
   it('у каждой диагонали 3+ сценария и 3 FAQ', () => {
     for (const d of DIAGONALS) { expect(d.scenarios.length).toBeGreaterThanOrEqual(3); expect(d.faq.length).toBe(3); }

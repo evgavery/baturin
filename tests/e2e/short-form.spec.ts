@@ -5,15 +5,11 @@ import { collectGoals, findLogLine } from './helpers';
 // Лог накопительный, между прогонами не чистится. Статичный маркер рискует найтись в строке от
 // ПРОШЛОГО прогона и дать ложный PASS, даже если СЕЙЧАС запись не произошла (регрессия) — поэтому
 // маркеры, которые ищем в логе, помечаем суффиксом текущего прогона (см. quiz.spec.ts).
-// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts (финальная фикс-волна:
-// раньше были продублированы в этом файле и ещё трёх спеках).
+// readLog/findLogLine/LOG_PATH — общая реализация в tests/e2e/helpers.ts.
 const runId = Date.now();
 
-// #short-form — разметка CtaBlock с formType="short" (ТЗ §6.3). На сегодня в кодовой базе она
-// подключена только на главной ("/") — CtaBlock на остальных страницах (в т.ч. /plazmy/, которую
-// называет бриф Task 12) рендерит вариант с кнопкой квиза (Task 5+, закреплено тестами plazmy.spec.ts:
-// `#cta button[data-quiz-open]`), а не короткую форму. Тестируем на реальном месте формы — см.
-// раздел «Отклонения» task-12-report.md.
+// #short-form — разметка CtaBlock с formType="short" (ТЗ §6.3): в кодовой базе она подключена
+// только на главной, на остальных страницах CtaBlock рендерит кнопку квиза.
 
 // Свой X-Test-IP на файл — иначе браузерные POST этого файла делят rate-limit-бакет 127.0.0.1
 // (окно фикстуры 2 с) с quiz.spec.ts и qualify-form.spec.ts (см. quiz.spec.ts).
@@ -29,8 +25,8 @@ test.describe('Короткая форма CTA (#short-form)', () => {
     const marker = `@test_short_${runId}`;
 
     await form.locator('input[name="name"]').fill('Короткая Форма');
-    // Реальный клик мышью по видимому чипу (не .check()) — регрессионный тест на фикс hit-testing
-    // в общем ChannelRadios.astro (Task 11 MINOR): раньше декоративный span перехватывал клики.
+    // Реальный клик мышью по видимому чипу (не .check()) — регресс на hit-testing:
+    // раньше декоративный span в ChannelRadios.astro перехватывал клики.
     await form.locator('label:has(input[name="channel"][value="telegram"])').click();
     await form.locator('input[name="contact"]').fill(marker);
     await form.locator('input[name="comment"]').fill(`тест-${runId}`);

@@ -1,7 +1,8 @@
 // Слайдер парка в hero (ТЗ §5.1 п.1). Прокрутка — нативная, со scroll-snap: свайп на мобиле
 // достаётся бесплатно, стрелки и точки просто зовут scrollTo. Автопрокрутка вежливая:
 // не стартует при prefers-reduced-motion, спит в фоновой вкладке, встаёт на паузу при наведении
-// и фокусе и полностью выключается после первого действия пользователя.
+// и фокусе, выключается после первого действия пользователя; кнопка [data-pause] выключает и
+// включает её явно (WCAG 2.2.2).
 const AUTOPLAY_MS = 6000;
 
 function initSlider(root: HTMLElement): void {
@@ -14,6 +15,8 @@ function initSlider(root: HTMLElement): void {
   let current = 0;
   let timer = 0;
   let stopped = false;
+  // Индекс цели программного скролла; -1 — программный скролл не летит.
+  let pendingTarget = -1;
 
   const markActive = (index: number): void => {
     current = index;
@@ -25,10 +28,11 @@ function initSlider(root: HTMLElement): void {
 
   const goTo = (index: number): void => {
     const target = (index + slides.length) % slides.length;
-    track.scrollTo({
-      left: track.clientWidth * target,
-      behavior: reducedMotion.matches ? 'auto' : 'smooth',
-    });
+    const left = track.clientWidth * target;
+    // Уже на месте — скролла не будет, наблюдатель не отработает, взведённый pendingTarget
+    // заглушил бы его навсегда.
+    pendingTarget = Math.abs(track.scrollLeft - left) < 2 ? -1 : target;
+    track.scrollTo({ left, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
     markActive(target);
   };
 
@@ -44,11 +48,36 @@ function initSlider(root: HTMLElement): void {
     timer = window.setInterval(() => goTo(current + 1), AUTOPLAY_MS);
   };
 
+  const pauseBtn = root.querySelector<HTMLElement>('[data-pause]');
+  // Иконки — <svg>, у SVGElement нет свойства hidden: переключаем класс, а не атрибут.
+  const iconPause = pauseBtn?.querySelector<SVGElement>('[data-icon-pause]');
+  const iconPlay = pauseBtn?.querySelector<SVGElement>('[data-icon-play]');
+  const syncPauseBtn = (): void => {
+    if (!pauseBtn || !iconPause || !iconPlay) return;
+    iconPause.classList.toggle('hidden', stopped);
+    iconPlay.classList.toggle('hidden', !stopped);
+    pauseBtn.setAttribute(
+      'aria-label',
+      stopped ? 'Запустить автопрокрутку' : 'Приостановить автопрокрутку',
+    );
+  };
+
   /** Пользователь взял управление на себя — дальше слайдер не двигается сам. */
   const stop = (): void => {
     stopped = true;
     pause();
+    syncPauseBtn();
   };
+
+  pauseBtn?.addEventListener('click', () => {
+    if (stopped) {
+      stopped = false;
+      play();
+      syncPauseBtn();
+    } else {
+      stop();
+    }
+  });
 
   dots.forEach((dot, index) => {
     dot.addEventListener('click', () => {
@@ -64,7 +93,22 @@ function initSlider(root: HTMLElement): void {
     stop();
     goTo(current + 1);
   });
-  root.addEventListener('pointerdown', stop);
+  // Пользователь взялся за трек (свайп/драг) — прервать программный полёт и вернуть
+  // точки под управление наблюдателя, чтобы они следовали за пальцем.
+  root.addEventListener('pointerdown', () => {
+    pendingTarget = -1;
+    stop();
+  });
+  track.addEventListener(
+    'wheel',
+    (event) => {
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) {
+        pendingTarget = -1;
+        stop();
+      }
+    },
+    { passive: true },
+  );
 
   root.addEventListener('mouseenter', pause);
   root.addEventListener('mouseleave', play);
@@ -73,10 +117,16 @@ function initSlider(root: HTMLElement): void {
   document.addEventListener('visibilitychange', () => (document.hidden ? pause() : play()));
 
   // Активная точка следует за реальным положением трека — в том числе после свайпа.
+  // Пока летит программный smooth-scroll (goTo через несколько слайдов), промежуточные
+  // слайды пролетают порог видимости и без фильтра дёргали бы индикатор туда-обратно —
+  // до приземления цели наблюдатель молчит.
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (entry.isIntersecting) markActive(slides.indexOf(entry.target as HTMLElement));
+        if (!entry.isIntersecting) continue;
+        const index = slides.indexOf(entry.target as HTMLElement);
+        if (pendingTarget === -1) markActive(index);
+        else if (index === pendingTarget) pendingTarget = -1;
       }
     },
     { root: track, threshold: 0.6 },

@@ -35,7 +35,7 @@ npm run dev         # локальная разработка, http://localhost:
 | `npm run check` | `astro check` — типы и диагностика Astro/TypeScript (strict) |
 | `npm run fonts` | копирует woff2-шрифты из `node_modules/@fontsource-variable/*` в `public/fonts/` |
 | `npm run test:unit` | unit-тесты (vitest) — чистые функции: цены, квиз-логика, LED-калькулятор |
-| `npm run test:e2e` | **сначала пересобирает** `dist/` (`astro build`), затем прогоняет Playwright: поднимает `php -S 127.0.0.1:4321 -t dist` сам (см. `playwright.config.ts`) на тестовом конфиге заявок (`tests/fixtures/lead-config.test.php`, `test_mode: true` — заявки не уходят в Telegram/почту, а пишутся в `tests/.tmp/leads.log`) |
+| `npm run test:e2e` | **сначала пересобирает** `dist/` (`astro build`), затем прогоняет Playwright: поднимает `php -S 127.0.0.1:4381 -t dist` сам (см. `playwright.config.ts`) на тестовом конфиге заявок (`tests/fixtures/lead-config.test.php`, `test_mode: true` — заявки не уходят в Telegram/почту, а пишутся в `tests/.tmp/leads.log`) |
 | `npm run serve` | поднимает уже собранный `dist/` на `php -S 127.0.0.1:4321` — для ручного просмотра/Lighthouse. Без `LEAD_CONFIG` формы будут искать `lead-config.php` в корне репозитория (на уровень выше `dist/` — так же, как на бою «на уровень выше webroot», см. раздел 2); файл в `.gitignore`, в репозиторий не попадёт |
 | `node scripts/check-js-budget.mjs` | бюджет JS ≤ 50 КБ gzip/страницу (ТЗ §12); гонять по свежему `dist/` |
 | `node scripts/check-links.mjs` | все внутренние `href`/`src` в `dist/` ведут на реальные файлы; гонять по свежему `dist/` |

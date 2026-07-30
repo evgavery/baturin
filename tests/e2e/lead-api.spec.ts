@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { apiPost, findLogLine } from './helpers';
 
-// Валидный payload — образец из ТЗ §6.4 / брифа Task 9.
+// Валидный payload — образец из ТЗ §6.4.
 const valid = {
   form_type: 'quiz',
   services: ['led', 'plasma'],
@@ -127,7 +127,7 @@ test.describe('POST /api/lead.php', () => {
 
   test('(10) невалидный JSON → 400', async ({ request }) => {
     const res = await request.post('/api/lead.php', {
-      headers: { Origin: 'http://127.0.0.1:4321', 'X-Test-IP': '198.51.100.10' },
+      headers: { Origin: 'http://127.0.0.1:4381', 'X-Test-IP': '198.51.100.10' },
       data: '{oops',
     });
 
@@ -189,11 +189,11 @@ test.describe('POST /api/lead.php', () => {
   test('(13) поддомен-суффикс легитимного Origin (не точная граница) → 403', async ({
     request,
   }) => {
-    // "http://127.0.0.1:4321" — валидный ПРЕФИКС строки "http://127.0.0.1:4321.evil.com", но это
+    // "http://127.0.0.1:4381" — валидный ПРЕФИКС строки "http://127.0.0.1:4381.evil.com", но это
     // домен атакующего, а не наш сайт с путём/портом. Проверка обязана отличать префикс-совпадение
     // от совпадения по границе URL (path/query/hash/конец строки).
     const res = await request.post('/api/lead.php', {
-      headers: { Origin: 'http://127.0.0.1:4321.evil.com', 'X-Test-IP': '198.51.100.13' },
+      headers: { Origin: 'http://127.0.0.1:4381.evil.com', 'X-Test-IP': '198.51.100.13' },
       data: valid,
     });
 

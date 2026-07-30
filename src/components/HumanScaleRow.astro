@@ -41,7 +41,7 @@ const humanWidth = `calc(var(--px-per-cm) * ${HUMAN_CM} * 60 / 149.1)`;
 
   <div class="mt-6 border-t border-line pt-5">
     <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">В цену позиции входят</p>
-    <ul class="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11.5px] text-text">
+    <ul role="list" class="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 font-mono text-[11.5px] text-text">
       {SITE.included.map((item) => <li>{item}</li>)}
     </ul>
   </div>

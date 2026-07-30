@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../config/site';
+import { MESSENGER_LINKS } from '../data/messengers';
 import { COMPANY_LINKS, DIRECTION_LINKS, POLICY_LINK } from '../data/nav';
 
 const year = new Date().getFullYear();
@@ -7,11 +8,6 @@ const year = new Date().getFullYear();
 const link =
   'flex min-h-[44px] items-center text-[14.5px] text-text transition-colors duration-200 hover:text-screen';
 const label = 'mb-3.5 font-mono text-[11px] tracking-[0.12em] text-dim uppercase';
-const messengers = [
-  { href: SITE.tgLink, goal: 'click_tg', label: 'Telegram' },
-  { href: SITE.waLink, goal: 'click_wa', label: 'WhatsApp' },
-  { href: SITE.maxLink, goal: 'click_max', label: 'MAX' },
-];
 ---
 
 <footer class="mt-20 border-t border-line bg-bg-deep">
@@ -57,7 +53,7 @@ const messengers = [
       <a href={`mailto:${SITE.email}`} class={link}>{SITE.email}</a>
       <div class="mb-2 flex flex-wrap gap-x-5">
         {
-          messengers.map((item) => (
+          MESSENGER_LINKS.map((item) => (
             <a href={item.href} target="_blank" rel="noopener" data-goal={item.goal} class={link}>
               {item.label}
             </a>

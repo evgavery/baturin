@@ -6,7 +6,7 @@ $cfgPath = getenv('LEAD_CONFIG') ?: dirname(__DIR__, 2) . '/lead-config.php';
 $cfg = is_file($cfgPath) ? require $cfgPath : null;
 if (!is_array($cfg)) { http_response_code(500); exit(json_encode(['ok' => false, 'error' => 'config'])); }
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); exit(json_encode(['ok' => false, 'error' => 'method'])); }
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') { http_response_code(405); header('Allow: POST'); exit(json_encode(['ok' => false, 'error' => 'method'])); }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
 // Префикс важен сам по себе: Referer всегда идёт с path после origin, точное сравнение сломало бы
@@ -14,12 +14,15 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_REFERER'] ?? '';
 // домен атакующего. Поэтому дополнительно требуем, чтобы сразу после совпавшего префикса шла
 // граница URL, а не продолжение хоста.
 $allowed = rtrim((string)$cfg['allowed_origin'], '/');
+// Пустой allowed_origin превратил бы проверку в «пропускать запросы без Origin/Referer».
+if ($allowed === '') { http_response_code(500); exit(json_encode(['ok' => false, 'error' => 'config'])); }
 $next = strlen($origin) > strlen($allowed) ? $origin[strlen($allowed)] : '';
 if (stripos($origin, $allowed) !== 0 || !in_array($next, ['', '/', '?', '#'], true)) {
   http_response_code(403); exit(json_encode(['ok' => false, 'error' => 'origin']));
 }
 
-$raw = file_get_contents('php://input');
+// maxlen 64К+1: тело больше лимита отбрасывается, не будучи прочитанным в память целиком.
+$raw = file_get_contents('php://input', false, null, 0, 65537);
 if ($raw === false || strlen($raw) > 65536) { http_response_code(400); exit(json_encode(['ok' => false, 'error' => 'validation'])); }
 $d = json_decode($raw ?: '', true);
 if (!is_array($d)) { http_response_code(400); exit(json_encode(['ok' => false, 'error' => 'validation'])); }
@@ -29,7 +32,9 @@ if (!is_array($d)) { http_response_code(400); exit(json_encode(['ok' => false, '
 // который PHP допечатывает в тело ответа ПЕРЕД нашим JSON и ломает контракт ответа — поэтому
 // приводим к строке только скаляры, иначе пустая строка.
 $str = fn($v) => is_scalar($v) ? (string)$v : '';
-$s = fn($k, $max) => mb_substr(trim($str($d[$k] ?? '')), 0, $max);
+// \R+ → пробел: перевод строки в свободном поле подделывал бы структурные строки уведомления
+// («\nКанал: …»), которое оператор читает как доверенное.
+$s = fn($k, $max) => mb_substr(trim(preg_replace('/\R+/u', ' ', $str($d[$k] ?? '')) ?? ''), 0, $max);
 $hp = $str($d['hp'] ?? '');
 if ($hp !== '') { exit(json_encode(['ok' => true])); } // honeypot: отвечаем успехом, ничего не делаем
 
@@ -37,7 +42,7 @@ $channels = ['telegram', 'whatsapp', 'max', 'email', 'call'];
 $serviceKeys = ['plasma', 'led', 'touch', 'stream', 'consult', 'complex'];
 $clientTypes = ['agency' => 'ивент-агентство', 'organizer' => 'организатор мероприятий', 'company' => 'компания', 'other' => 'другое'];
 $name = $s('name', 100); $contact = $s('contact', 100); $channel = $str($d['channel'] ?? '');
-$services = array_values(array_intersect(array_filter((array)($d['services'] ?? []), 'is_scalar'), $serviceKeys));
+$services = array_values(array_unique(array_intersect(array_filter((array)($d['services'] ?? []), 'is_scalar'), $serviceKeys)));
 $clientType = $str($d['client_type'] ?? '');
 if (!isset($clientTypes[$clientType])) { $clientType = ''; } // неизвестный тип не валит заявку
 $isPhone = fn(string $v) => (bool)preg_match('/^\+?[\d\s()\-]{10,20}$/u', $v);
@@ -55,17 +60,21 @@ $ip = (!empty($cfg['test_mode']) && !empty($_SERVER['HTTP_X_TEST_IP'])) ? $_SERV
 $rlFile = sys_get_temp_dir() . '/leads_rl_' . md5($ip);
 $now = time(); $win = (int)$cfg['rate_limit_window'];
 $hits = array_filter(is_file($rlFile) ? (array)json_decode((string)file_get_contents($rlFile), true) : [], fn($t) => $now - (int)$t < $win);
-if (count($hits) >= (int)$cfg['rate_limit_max']) { http_response_code(429); exit(json_encode(['ok' => false, 'error' => 'rate_limit'])); }
+if (count($hits) >= (int)$cfg['rate_limit_max']) { http_response_code(429); header('Retry-After: ' . $win); exit(json_encode(['ok' => false, 'error' => 'rate_limit'])); }
 $hits[] = $now; file_put_contents($rlFile, json_encode(array_values($hits)), LOCK_EX);
 
 $det = (array)($d['details'] ?? []);
+// Диагонали — по whitelist значений формы, размер LED — по символам и длине: недоверенные
+// details не должны раздувать уведомление за телеграмный лимит 4096 или подделывать его строки.
+$diagonals = array_values(array_unique(array_intersect(array_map($str, (array)($det['diagonals'] ?? [])), ['55', '75', '86', '98', 'other'])));
+$ledSize = mb_substr((string)preg_replace('/[^0-9xX×.,]/u', '', $str($det['led_size'] ?? '')), 0, 20);
 $what = [];
 if ($services) {
   $names = ['plasma' => 'Плазменные панели', 'led' => 'LED-экран', 'touch' => 'Тач-панели', 'stream' => 'Видеотрансляция', 'consult' => 'Нужна консультация', 'complex' => 'Комплекс под задачу'];
   foreach ($services as $sv) {
     $line = $names[$sv];
-    if ($sv === 'plasma' && !empty($det['diagonals'])) $line .= ' ' . implode('″, ', array_map($str, (array)$det['diagonals'])) . '″' . (!empty($det['qty']) ? ' ×' . (int)$det['qty'] : '');
-    if ($sv === 'led' && !empty($det['led_size'])) $line .= ' ' . preg_replace('/[^0-9xX×.,]/u', '', $str($det['led_size'])) . ' м' . (!empty($det['outdoor']) ? ' (outdoor)' : ' (indoor)');
+    if ($sv === 'plasma' && $diagonals) $line .= ' ' . implode('″, ', $diagonals) . '″' . (!empty($det['qty']) ? ' ×' . (int)$det['qty'] : '');
+    if ($sv === 'led' && $ledSize !== '') $line .= ' ' . $ledSize . ' м' . (!empty($det['outdoor']) ? ' (outdoor)' : ' (indoor)');
     $what[] = $line;
   }
 }
@@ -97,7 +106,14 @@ if ($cfg['tg_bot_token'] && $cfg['tg_chat_id']) {
 $host = parse_url($cfg['allowed_origin'], PHP_URL_HOST) ?: 'localhost';
 $mailOk = @mail($cfg['lead_email'], '=?UTF-8?B?' . base64_encode('Заявка с сайта') . '?=',
   $text, "From: robot@{$host}\r\nContent-Type: text/plain; charset=utf-8");
-if (!$tgOk && !$mailOk) error_log('lead.php: заявка не доставлена ни в TG, ни на почту: ' . $raw);
-if (!$tgOk && $mailOk) error_log('lead.php: telegram недоступен, ушло только письмо');
+// Без payload в логе: на shared-хостинге error_log нередко лежит в webroot и читается по HTTP —
+// ПДн заявки туда попадать не должны.
+if (!$tgOk && !$mailOk) {
+  error_log('lead.php: заявка не доставлена ни в TG, ни на почту (form_type=' . $s('form_type', 10) . ', page=' . $s('page', 100) . ')');
+  // Честная ошибка вместо ok:true: фронт покажет экран «не получилось» с прямыми контактами,
+  // молча потерянных заявок быть не должно.
+  http_response_code(502); exit(json_encode(['ok' => false, 'error' => 'delivery']));
+}
+if (!$tgOk) error_log('lead.php: telegram недоступен, ушло только письмо');
 
 exit(json_encode(['ok' => true]));

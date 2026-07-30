@@ -9,13 +9,13 @@ import { HOME_LINK, LED_LINK, PLASMA_LINK } from '../data/nav';
 import { area, priceFrom, recommendPitch } from '../islands/calc-core';
 import Base from '../layouts/Base.astro';
 import { num, rub } from '../lib/format';
+import { boxClass, fieldLabel, primaryButton, secondaryButton } from '../lib/ui';
 
 // Страница направления по ТЗ §5.3. Цены типовых конфигураций считает тот же calc-core,
 // что и калькулятор в браузере: разойтись витрина и остров не могут.
 const M2 = SITE.prices.ledM2;
 
-// Полный title — 56 знаков (потолок ТЗ §9 — 60): «с монтажом» из шаблона убрано, иначе
-// с суффиксом бренда строка вырастает до 67 знаков. Монтаж остаётся в description.
+// В title нет «с монтажом»: с ним строка выходит за лимит 60 знаков (ТЗ §9).
 const title = `Аренда LED-экранов в Москве — от ${rub(M2)}/м² | ${SITE.brandName}`;
 const description = `Светодиодные экраны indoor и outdoor в аренду: собираем экран любого размера из кабинетов. От ${rub(M2)}/м² в сутки с монтажом. Смета за 30\u00A0минут в мессенджер.`;
 
@@ -138,12 +138,8 @@ const included = [
   'Техник на площадке: сборка, настройка и дежурство всё мероприятие',
 ];
 
-const boxClass = 'rounded-box border border-line bg-surface';
-const fieldLabel = 'mb-2 block font-mono text-[11px] tracking-[0.1em] text-dim uppercase';
 const fieldInput =
   'w-full min-h-[48px] rounded-sm border border-line-strong bg-bg-deep px-4 py-3 font-mono text-[16px] text-screen focus:border-accent';
-const primaryButton =
-  'flex min-h-[48px] items-center justify-center rounded-full bg-accent px-7 text-[15.5px] font-semibold text-white transition-[background-color,box-shadow] duration-200 hover:bg-accent-soft hover:shadow-glow-md active:bg-accent-press';
 ---
 
 <Base title={title} description={description}>
@@ -183,7 +179,7 @@ const primaryButton =
           <a
             href={SITE.phoneHref}
             data-goal="click_phone"
-            class="flex min-h-[48px] items-center justify-center rounded-full border border-line-strong px-7 text-[15.5px] font-medium text-screen transition-colors duration-200 hover:border-line-on-strong"
+            class={secondaryButton}
             >Позвонить</a
           >
           <a href="#calc" class="flex min-h-[48px] items-center font-mono text-[13px] text-focus"
@@ -194,8 +190,12 @@ const primaryButton =
 
       <div class="grid min-w-0 gap-bento md:col-span-4">
         {
-          facts.map((fact) => (
-            <div class={`${boxClass} p-6`}>
+          facts.map((fact, index) => (
+            <div
+              data-screen-in
+              style={`animation-delay:${120 * (index + 1)}ms`}
+              class={`${boxClass} p-6`}
+            >
               <p class="font-mono text-[11px] tracking-[0.12em] text-dim uppercase">{fact.label}</p>
               <p class="mt-3 font-display text-[30px] leading-none font-semibold text-screen">
                 {fact.value}
@@ -357,7 +357,7 @@ const primaryButton =
       </div>
       <div id="included" class={`min-w-0 ${boxClass} p-6 sm:p-8 md:col-span-5`}>
         <h2 class="text-[20px] font-semibold text-screen">Что входит в аренду экрана</h2>
-        <ol class="mt-5 flex flex-col gap-3 text-[15px] text-text">
+        <ol role="list" class="mt-5 flex flex-col gap-3 text-[15px] text-text">
           {
             included.map((item, index) => (
               <li class="flex gap-3">
@@ -376,10 +376,8 @@ const primaryButton =
       </div>
     </section>
 
-    {/* Полезный текст — после конверсионных блоков (ТЗ §9). content-visibility здесь намеренно
-        НЕ ставим: внутри — [data-seo-text], а пока элемент под content-visibility: auto не
-        отрендерен (вне вьюпорта), браузер отдаёт его innerText пустой строкой — падают
-        e2e-проверки длины текста (calc.spec.ts и др.), которые читают именно innerText. */}
+    {/* Полезный текст — после конверсионных блоков (ТЗ §9). Без cv-auto: у нерендеренной
+        секции innerText пуст — падают e2e-проверки [data-seo-text]. */}
     <section id="about" class="mt-20">
       <h2 class="section-title mb-6">Когда берут LED-экран и что влияет на цену</h2>
       <div class={`${boxClass} p-6 sm:p-9`}>
